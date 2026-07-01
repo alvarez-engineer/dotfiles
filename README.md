@@ -2,7 +2,7 @@
 
 A cross-platform (Linux + macOS) development environment, version-controlled and
 installed by symlink. One `muted-ink` dark theme runs across every tool:
-terminal, editor, multiplexer, git diffs, and CLI utilities.
+terminal, editor, multiplexer, git diffs, CLI utilities, and an AI coding agent.
 
 Each tool is a self-contained **module** with its own config and installer. Use
 all of them or just the ones you want.
@@ -39,7 +39,8 @@ cd dotfiles
 See [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) for per-OS details and manual steps.
 Config for a tool you haven't installed yet is harmless — it waits until the
 binary exists. After adding your git identity to `~/.gitconfig.local`, launch
-`nvim` once so lazy.nvim installs plugins.
+`nvim` once so lazy.nvim installs plugins, and run `opencode auth login` before
+first using opencode.
 
 ## Everyday commands
 
@@ -48,7 +49,7 @@ make bootstrap       # install tool binaries (dnf/apt/brew); -dev adds linters
 make all             # bootstrap + install in one shot
 make install         # ./install.sh (configs only)
 make dry-run         # preview all actions
-make install-nvim    # one module (also: -shell -git -tmux -ghostty -cli)
+make install-nvim    # one module (also: -shell -git -tmux -ghostty -cli -opencode)
 make doctor          # what's linked, what tools are missing
 make backup          # tarball all managed files to ./backups/ before changes
 make validate        # ghostty +validate-config (needs the ghostty CLI)
