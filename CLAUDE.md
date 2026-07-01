@@ -12,7 +12,9 @@ files, and a small Lua Neovim config, all themed to one `muted-ink` palette.
 ## Commands
 
 ```bash
-./install.sh [--copy] [--dry-run] [MODULE ...]   # install; MODULES: ghostty shell git tmux nvim cli
+./install.sh [--bootstrap] [--copy] [--dry-run] [MODULE ...]  # MODULES: ghostty shell git tmux nvim cli
+make bootstrap [bootstrap-dev]  # install tool BINARIES via dnf/apt/brew (sudo); -dev adds linters
+make all                     # bootstrap + install in one shot
 make install / dry-run / uninstall
 make install-<module>        # e.g. make install-nvim
 make doctor                  # report linked targets + missing binaries
@@ -20,6 +22,10 @@ make backup                  # tarball all managed files to ./backups/
 make validate                # ghostty +validate-config (needs ghostty CLI)
 make check                   # THE quality gate — run after editing any script
 ```
+
+`scripts/bootstrap.sh` (needs sudo on Linux) installs the tool binaries; it is
+deliberately separate from `install.sh`, which only symlinks configs and needs
+no root. `--bootstrap`/`make all` chains them.
 
 There is no test suite. `make check` is the gate: `bash -n` on all shell
 scripts, plus `zsh -n`, `shellcheck`, and `luacheck` **when those tools are

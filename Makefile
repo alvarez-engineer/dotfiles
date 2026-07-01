@@ -1,11 +1,23 @@
 SHELL := /usr/bin/env bash
 
 .PHONY: install install-copy dry-run uninstall doctor backup validate check tree \
+        bootstrap bootstrap-dev all \
         install-shell install-git install-tmux install-nvim install-ghostty install-cli
+
+# --- Bootstrap (install tool binaries; needs sudo on Linux) ----------------
+bootstrap:
+	./scripts/bootstrap.sh
+
+bootstrap-dev:
+	./scripts/bootstrap.sh --dev
 
 # --- Install ---------------------------------------------------------------
 install:
 	./install.sh
+
+# Tools + configs in one shot
+all:
+	./install.sh --bootstrap
 
 install-copy:
 	./install.sh --copy

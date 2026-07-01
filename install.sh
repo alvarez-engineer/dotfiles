@@ -14,12 +14,14 @@ are backed up with a timestamp before being replaced.
 Modules (default: all): ghostty shell git tmux nvim cli
 
 Options:
+  --bootstrap  install the tool binaries first (scripts/bootstrap.sh; needs sudo)
   --copy       copy files instead of symlinking
   --dry-run    print actions without changing the filesystem
   -h, --help   show this help
 
 Examples:
-  ./install.sh                 # install everything by symlink
+  ./install.sh                 # symlink all configs
+  ./install.sh --bootstrap     # install tools, then symlink all configs
   ./install.sh --dry-run       # preview all actions
   ./install.sh shell git       # install only the shell and git modules
   ./install.sh --copy nvim     # copy the nvim config instead of symlinking
@@ -30,19 +32,28 @@ ALL_MODULES=(ghostty shell git tmux nvim cli)
 
 mode="symlink"
 dry_run="false"
+bootstrap="false"
 selected=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --copy)    mode="copy"; shift ;;
-    --dry-run) dry_run="true"; shift ;;
-    -h|--help) usage; exit 0 ;;
-    -*)        echo "Unknown option: $1" >&2; usage; exit 1 ;;
-    *)         selected+=("$1"); shift ;;
+    --copy)      mode="copy"; shift ;;
+    --dry-run)   dry_run="true"; shift ;;
+    --bootstrap) bootstrap="true"; shift ;;
+    -h|--help)   usage; exit 0 ;;
+    -*)          echo "Unknown option: $1" >&2; usage; exit 1 ;;
+    *)           selected+=("$1"); shift ;;
   esac
 done
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+# --bootstrap: install the tool binaries first (needs sudo on Linux).
+if [[ "$bootstrap" == "true" ]]; then
+  bootstrap_args=()
+  [[ "$dry_run" == "true" ]] && bootstrap_args+=("--dry-run")
+  bash "$repo_root/scripts/bootstrap.sh" "${bootstrap_args[@]}"
+fi
 
 if [[ ${#selected[@]} -eq 0 ]]; then
   selected=("${ALL_MODULES[@]}")

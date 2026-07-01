@@ -6,6 +6,24 @@ programs first (or alongside), then run `./install.sh` to symlink the configs.
 Config for a tool that isn't installed yet is harmless — it simply sits ready
 until you install the binary.
 
+## Automated (recommended)
+
+`scripts/bootstrap.sh` detects your platform (dnf / apt / brew) and installs the
+whole toolchain, including Starship via its official script where it isn't
+packaged. It uses `sudo` on Linux (you'll be prompted).
+
+```bash
+./scripts/bootstrap.sh            # install all tools      (make bootstrap)
+./scripts/bootstrap.sh --dev      # tools + gate linters   (make bootstrap-dev)
+./scripts/bootstrap.sh --dry-run  # print the commands, change nothing
+
+# One shot — tools then configs:
+./install.sh --bootstrap          # (make all)
+```
+
+`--dev` adds the `make check` linters (`shellcheck`, and `luacheck` via
+LuaRocks). Everything below is the equivalent **manual** path, per OS.
+
 ## Fedora / RHEL (dnf)
 
 Everything except Starship is in the Fedora repositories:
@@ -18,6 +36,12 @@ Starship is not in the Fedora repos — use the official installer:
 
 ```bash
 curl -sS https://starship.rs/install.sh | sh
+```
+
+Dev-gate linters (only needed to run `make check` locally):
+
+```bash
+sudo dnf install -y ShellCheck luarocks && sudo luarocks install luacheck
 ```
 
 Ghostty itself: install from https://ghostty.org/download (or your distro's

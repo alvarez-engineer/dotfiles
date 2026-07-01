@@ -24,16 +24,18 @@ all of them or just the ones you want.
 git clone <your-repo-url> dotfiles
 cd dotfiles
 
-# 1. Install the tool binaries (see docs/BOOTSTRAP.md for your OS). Fedora:
-sudo dnf install -y neovim tmux fzf ripgrep bat eza git-delta zsh fd-find
-curl -sS https://starship.rs/install.sh | sh    # starship isn't in Fedora repos
+# Tools + configs in one shot (bootstrap installs binaries via dnf/apt/brew,
+# using sudo on Linux; then all configs are symlinked, backing up existing files)
+./install.sh --bootstrap
 
-# 2. Symlink the configs (existing files are backed up first)
-./install.sh                 # everything
+# Or do the two steps separately / selectively:
+./scripts/bootstrap.sh       # just install the tool binaries   (make bootstrap)
+./install.sh                 # just symlink all configs         (make install)
 ./install.sh --dry-run       # preview without changing anything
-./install.sh shell git nvim  # just some modules
+./install.sh shell git nvim  # only some modules
 ```
 
+See [docs/BOOTSTRAP.md](docs/BOOTSTRAP.md) for per-OS details and manual steps.
 Config for a tool you haven't installed yet is harmless — it waits until the
 binary exists. After adding your git identity to `~/.gitconfig.local`, launch
 `nvim` once so lazy.nvim installs plugins.
@@ -41,7 +43,9 @@ binary exists. After adding your git identity to `~/.gitconfig.local`, launch
 ## Everyday commands
 
 ```bash
-make install         # ./install.sh
+make bootstrap       # install tool binaries (dnf/apt/brew); -dev adds linters
+make all             # bootstrap + install in one shot
+make install         # ./install.sh (configs only)
 make dry-run         # preview all actions
 make install-nvim    # one module (also: -shell -git -tmux -ghostty -cli)
 make doctor          # what's linked, what tools are missing
