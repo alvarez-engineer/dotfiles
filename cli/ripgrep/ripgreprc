@@ -1,0 +1,16 @@
+# ripgrep config — used via RIPGREP_CONFIG_PATH (set in shell/exports.sh).
+
+# Search hidden files but never descend into .git
+--hidden
+--glob=!.git/*
+
+# Smart case: case-insensitive unless the pattern has uppercase
+--smart-case
+
+# Nicer output
+--max-columns=200
+--max-columns-preview
+--colors=path:fg:122,162,165
+--colors=line:fg:107,114,128
+--colors=match:fg:125,171,171
+--colors=match:style:bold

@@ -13,11 +13,12 @@ or download the official `.dmg` from Ghostty's website and drag the app into `/A
 ## Install this config
 
 ```bash
-git clone <your-repo-url> ghostty-config
-cd ghostty-config
-./scripts/install.sh --profile macos
-./scripts/install-prompt.sh --shell zsh
+git clone <your-repo-url> dotfiles
+cd dotfiles
+./install.sh ghostty shell     # macOS profile is auto-detected
 ```
+
+To force a specific Ghostty profile later: `./ghostty/use-profile.sh macos`.
 
 The repo installs to:
 

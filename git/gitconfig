@@ -1,0 +1,88 @@
+# Managed ~/.gitconfig — symlinked from the dotfiles repo (git module).
+# Identity and secrets live in ~/.gitconfig.local (untracked), included below.
+
+[include]
+	# Machine-local: user.name / user.email / signing keys / work overrides.
+	path = ~/.gitconfig.local
+
+[user]
+	# Intentionally empty here — set name/email in ~/.gitconfig.local.
+
+[init]
+	defaultBranch = main
+
+[core]
+	# Use delta when installed; fall back to less otherwise.
+	pager = delta || less
+	editor = nvim
+	autocrlf = input
+	excludesfile = ~/.config/git/ignore
+
+[interactive]
+	diffFilter = delta --color-only || cat
+
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = false
+	syntax-theme = muted-ink
+	# muted-ink derived diff colors
+	minus-style = syntax "#3a1d1d"
+	minus-emph-style = syntax "#5a2a2a"
+	plus-style = syntax "#16301c"
+	plus-emph-style = syntax "#1f4a2c"
+	line-numbers-minus-style = "#b26a6a"
+	line-numbers-plus-style = "#7a9b76"
+	line-numbers-zero-style = "#4b5563"
+	file-style = "#7aa2a5"
+	hunk-header-style = "#6b7280"
+
+[color]
+	ui = auto
+
+[pull]
+	ff = only
+
+[push]
+	default = current
+	autoSetupRemote = true
+
+[fetch]
+	prune = true
+
+[rebase]
+	autosquash = true
+	autostash = true
+
+[merge]
+	conflictstyle = zdiff3
+
+[diff]
+	algorithm = histogram
+	colorMoved = default
+
+[commit]
+	verbose = true
+
+[credential "https://github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+
+[alias]
+	st = status --short --branch
+	co = checkout
+	sw = switch
+	br = branch
+	ci = commit
+	ca = commit --amend
+	unstage = reset HEAD --
+	last = log -1 HEAD --stat
+	lg = log --graph --abbrev-commit --decorate --format=format:'%C(bold blue)%h%C(reset) %C(dim white)%an%C(reset) %C(green)(%ar)%C(reset)%C(auto)%d%C(reset) %s'
+	ll = log --oneline --graph --decorate -30
+	amend = commit --amend --no-edit
+	undo = reset --soft HEAD~1
+	aliases = config --get-regexp ^alias\\.

@@ -1,0 +1,53 @@
+# Managed ~/.zshrc — symlinked from the dotfiles repo (shell module).
+# Edit the repo file, not the symlink. Machine-local tweaks: ~/.zshrc.local
+
+# --- Dotfiles modules (resolve the repo dir via this file's real path) ---
+__dotfiles_shell="${${(%):-%N}:A:h}"
+for __f in exports.sh aliases.sh functions.sh; do
+  [ -r "$__dotfiles_shell/$__f" ] && source "$__dotfiles_shell/$__f"
+done
+unset __f
+
+# --- PATH ---
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+  path=("$HOME/.local/bin" "$HOME/bin" $path)
+fi
+export PATH
+typeset -U path PATH   # dedupe
+
+# --- History ---
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=100000
+setopt APPEND_HISTORY SHARE_HISTORY INC_APPEND_HISTORY
+setopt HIST_IGNORE_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS
+
+# --- Behaviour ---
+setopt AUTO_CD CORRECT INTERACTIVE_COMMENTS NO_BEEP
+setopt EXTENDED_GLOB GLOB_DOTS
+
+# --- Completion ---
+autoload -Uz compinit && compinit -u
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' menu select
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+
+# --- fzf, if installed ---
+if command -v fzf >/dev/null 2>&1; then
+  if fzf --zsh >/dev/null 2>&1; then
+    source <(fzf --zsh)
+  else
+    [ -f /usr/share/fzf/shell/key-bindings.zsh ] && source /usr/share/fzf/shell/key-bindings.zsh
+    [ -f /usr/share/fzf/shell/completion.zsh ] && source /usr/share/fzf/shell/completion.zsh
+  fi
+fi
+
+# --- Prompt: Starship if available, otherwise the bundled muted prompt ---
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+elif [ -r "$__dotfiles_shell/prompt/zsh_prompt.zsh" ]; then
+  source "$__dotfiles_shell/prompt/zsh_prompt.zsh"
+fi
+
+# --- Machine-local overrides (untracked) ---
+[ -r "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"

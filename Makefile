@@ -1,44 +1,56 @@
 SHELL := /usr/bin/env bash
-CONFIG := ./config/config.ghostty
 
-.PHONY: install install-copy install-prompt uninstall validate doctor backup tree check
+.PHONY: install install-copy dry-run uninstall doctor backup validate check tree \
+        install-shell install-git install-tmux install-nvim install-ghostty install-cli
 
+# --- Install ---------------------------------------------------------------
 install:
-	./scripts/install.sh
+	./install.sh
 
 install-copy:
-	./scripts/install.sh --copy
+	./install.sh --copy
 
-install-prompt:
-	./scripts/install-prompt.sh
+dry-run:
+	./install.sh --dry-run
+
+# Per-module installs
+install-shell:   ; ./install.sh shell
+install-git:     ; ./install.sh git
+install-tmux:    ; ./install.sh tmux
+install-nvim:    ; ./install.sh nvim
+install-ghostty: ; ./install.sh ghostty
+install-cli:     ; ./install.sh cli
 
 uninstall:
 	./scripts/uninstall.sh
 
-validate:
-	./scripts/validate.sh $(CONFIG)
-
+# --- Diagnostics -----------------------------------------------------------
 doctor:
 	./scripts/doctor.sh
 
 backup:
 	./scripts/backup.sh
 
-tree:
-	find . -maxdepth 4 -type f | sort
+validate:
+	./ghostty/validate.sh
 
+# --- Quality gate ----------------------------------------------------------
 check:
-	bash -n scripts/*.sh
-	bash -n config/shell/bash_prompt.sh
+	bash -n install.sh lib/common.sh */install.sh scripts/*.sh ghostty/*.sh \
+	        shell/exports.sh shell/aliases.sh shell/functions.sh shell/bashrc \
+	        shell/prompt/bash_prompt.sh
 	@if command -v zsh >/dev/null 2>&1; then \
-		echo "zsh -n config/shell/zsh_prompt.zsh"; \
-		zsh -n config/shell/zsh_prompt.zsh; \
-	else \
-		echo "zsh not found; skipping zsh_prompt.zsh syntax check"; \
-	fi
+		echo "zsh -n shell/zshrc shell/prompt/zsh_prompt.zsh"; \
+		zsh -n shell/zshrc; zsh -n shell/prompt/zsh_prompt.zsh; \
+	else echo "zsh not found; skipping zsh syntax check"; fi
 	@if command -v shellcheck >/dev/null 2>&1; then \
-		echo "shellcheck scripts/*.sh config/shell/bash_prompt.sh"; \
-		shellcheck scripts/*.sh config/shell/bash_prompt.sh; \
-	else \
-		echo "shellcheck not found; skipping lint"; \
-	fi
+		echo "shellcheck"; \
+		shellcheck -e SC1090,SC1091 install.sh lib/common.sh */install.sh scripts/*.sh ghostty/*.sh \
+		           shell/exports.sh shell/aliases.sh shell/functions.sh; \
+	else echo "shellcheck not found; skipping lint"; fi
+	@if command -v luacheck >/dev/null 2>&1; then \
+		echo "luacheck nvim/"; luacheck --no-max-line-length -q nvim/ || true; \
+	else echo "luacheck not found; skipping lua lint"; fi
+
+tree:
+	find . -path ./.git -prune -o -type f -print | sort

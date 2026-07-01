@@ -7,7 +7,7 @@ This repo ships one custom theme:
 It lives in:
 
 ```text
-config/themes/muted-ink
+ghostty/themes/muted-ink
 ```
 
 Ghostty searches the `themes/` subdirectory of the Ghostty config directory before built-in themes.

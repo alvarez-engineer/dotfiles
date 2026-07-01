@@ -26,11 +26,12 @@ Fedora, Debian, Ubuntu, and AppImage options may use community-maintained packag
 ## Install this config
 
 ```bash
-git clone <your-repo-url> ghostty-config
-cd ghostty-config
-./scripts/install.sh --profile linux
-./scripts/install-prompt.sh
+git clone <your-repo-url> dotfiles
+cd dotfiles
+./install.sh ghostty shell     # Linux profile is auto-detected
 ```
+
+To force a specific Ghostty profile later: `./ghostty/use-profile.sh linux`.
 
 The installed path is:
 
@@ -80,7 +81,7 @@ gtk-wide-tabs = false
 If these cause issues on your build, switch to the minimal profile:
 
 ```bash
-./scripts/use-profile.sh minimal
+./ghostty/use-profile.sh minimal
 ```
 
 ## Recommended local overrides

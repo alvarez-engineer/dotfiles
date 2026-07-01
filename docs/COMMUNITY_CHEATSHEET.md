@@ -33,15 +33,15 @@ Useful prompt fields:
 Already included in this repo:
 
 ```bash
-./scripts/install-prompt.sh
+./install.sh shell
 ```
 
 Files:
 
 ```text
-config/shell/bash_prompt.sh
-config/shell/zsh_prompt.zsh
-config/shell/starship.toml
+shell/prompt/bash_prompt.sh
+shell/prompt/zsh_prompt.zsh
+shell/starship.toml
 ```
 
 ### 2. Starship for richer coding context
@@ -80,9 +80,9 @@ A recurring community pattern is using `fzf` to switch themes, fonts, or config 
 This repo has a simple profile switcher already:
 
 ```bash
-./scripts/use-profile.sh macos
-./scripts/use-profile.sh linux
-./scripts/use-profile.sh minimal
+./ghostty/use-profile.sh macos
+./ghostty/use-profile.sh linux
+./ghostty/use-profile.sh minimal
 ```
 
 Optional local helper:
@@ -91,12 +91,12 @@ Optional local helper:
 ghostty-profile-fzf() {
   local repo="$HOME/path/to/ghostty-cross-platform-config"
   local profile
-  profile=$(find "$repo/config/profiles" -type f -name '*.ghostty' \
+  profile=$(find "$repo/ghostty/profiles" -type f -name '*.ghostty' \
     | sed 's#.*/##; s#\.ghostty$##' \
     | sort \
     | fzf --prompt='ghostty profile> ') || return
 
-  "$repo/scripts/use-profile.sh" "$profile"
+  "$repo/ghostty/use-profile.sh" "$profile"
 }
 ```
 

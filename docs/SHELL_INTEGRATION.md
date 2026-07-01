@@ -5,7 +5,7 @@ Ghostty shell integration and your shell prompt are related but separate.
 - Ghostty shell integration helps the terminal understand prompts, working directories, cursor changes, and SSH terminfo.
 - The shell prompt controls what text is displayed before each command.
 
-This repo enables Ghostty shell integration and also includes optional bash/zsh prompt snippets in `config/shell/`.
+This repo enables Ghostty shell integration and also includes optional bash/zsh prompt snippets in `shell/`.
 
 ## Ghostty integration
 
@@ -38,7 +38,7 @@ shell-integration-features = cursor,title,ssh-env,ssh-terminfo
 To display the current Git branch and coding context, install the prompt block:
 
 ```bash
-./scripts/install-prompt.sh
+./install.sh shell
 ```
 
 This sources one of:

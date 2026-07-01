@@ -23,7 +23,7 @@ ghostty +validate-config --config-file ~/.config/ghostty/config.ghostty
 Check paths:
 
 ```bash
-./scripts/print-paths.sh
+./ghostty/print-paths.sh
 ```
 
 Preferred path:
@@ -123,7 +123,7 @@ inside Ghostty.
 ## Revert to minimal profile
 
 ```bash
-./scripts/use-profile.sh minimal
+./ghostty/use-profile.sh minimal
 ```
 
 Then reload Ghostty.
@@ -132,7 +132,8 @@ Then reload Ghostty.
 
 ```bash
 rm -rf ~/.config/ghostty
-./scripts/install.sh --profile minimal
+./install.sh ghostty
+./ghostty/use-profile.sh minimal
 ```
 
 Only do this after backing up your existing config.

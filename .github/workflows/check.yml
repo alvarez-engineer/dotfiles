@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install shellcheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck zsh
+      - name: Install linters
+        run: sudo apt-get update && sudo apt-get install -y shellcheck zsh lua-check
       - name: Run checks
         run: make check

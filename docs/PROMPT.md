@@ -31,20 +31,20 @@ Example:
 Install Ghostty config first:
 
 ```bash
-./scripts/install.sh
+./install.sh ghostty
 ```
 
 Then install the shell prompt block:
 
 ```bash
-./scripts/install-prompt.sh
+./install.sh shell
 ```
 
 Force a shell when needed:
 
 ```bash
-./scripts/install-prompt.sh --shell zsh
-./scripts/install-prompt.sh --shell bash
+./install.sh shell --shell zsh
+./install.sh shell --shell bash
 ```
 
 The script backs up `~/.zshrc` or `~/.bashrc` before editing it.
