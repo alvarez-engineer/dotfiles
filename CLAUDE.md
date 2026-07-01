@@ -35,8 +35,8 @@ present** (each step skips gracefully otherwise, so it exits 0 locally). CI
 ## Architecture (the important part)
 
 **Module = top-level directory + its own `install.sh`.** The modules are
-`ghostty/ shell/ git/ tmux/ nvim/ cli/`. The root `install.sh` is only an
-orchestrator: it sets three env vars and then sources each selected module's
+`ghostty/ shell/ git/ tmux/ nvim/ cli/ opencode/`. The root `install.sh` is only
+an orchestrator: it sets three env vars and then sources each selected module's
 installer.
 
 - `lib/common.sh` is the shared library every module installer sources. Its
@@ -63,8 +63,9 @@ installer.
 `ghostty/themes/muted-ink`, `nvim/colors/muted-ink.lua`,
 `nvim/lua/plugins/lualine.lua`, `cli/bat/themes/muted-ink.tmTheme` (also used by
 git-delta via `syntax-theme = muted-ink`), `tmux/tmux.conf` status colors, the
-`[delta]` block in `git/gitconfig`, and the `--colors`/`FZF_DEFAULT_OPTS` in
-`cli/ripgrep/ripgreprc` and `shell/exports.sh`.
+`[delta]` block in `git/gitconfig`, the `--colors`/`FZF_DEFAULT_OPTS` in
+`cli/ripgrep/ripgreprc` and `shell/exports.sh`, and
+`opencode/themes/muted-ink.json` (defs palette + full theme).
 
 ## Conventions
 

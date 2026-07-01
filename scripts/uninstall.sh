@@ -49,6 +49,9 @@ targets=(
   "$xdg/bat/config"
   "$xdg/bat/themes/muted-ink.tmTheme"
   "$xdg/ripgrep/ripgreprc"
+  "$xdg/opencode/opencode.json"
+  "$xdg/opencode/tui.json"
+  "$xdg/opencode/themes/muted-ink.json"
 )
 
 run() { if [[ "$dry_run" == "true" ]]; then printf 'DRY RUN: %s\n' "$*"; else "$@"; fi; }

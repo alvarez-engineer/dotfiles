@@ -22,6 +22,9 @@ rel_targets=(
   ".config/nvim"
   ".config/bat"
   ".config/ripgrep"
+  ".config/opencode/opencode.json"
+  ".config/opencode/tui.json"
+  ".config/opencode/themes"
 )
 
 present=()

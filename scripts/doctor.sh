@@ -15,7 +15,7 @@ printf 'shell:    %s\n' "${SHELL:-unknown}"
 printf 'XDG_CONFIG_HOME: %s\n\n' "$xdg"
 
 printf 'Tools:\n'
-for b in ghostty nvim tmux git starship fzf rg bat eza delta zsh; do
+for b in ghostty nvim tmux git starship fzf rg bat eza delta zsh opencode; do
   if command -v "$b" >/dev/null 2>&1; then
     printf '  [x] %-9s %s\n' "$b" "$(command -v "$b")"
   else
@@ -35,6 +35,7 @@ targets=(
   "$xdg/nvim"
   "$xdg/bat/config"
   "$xdg/ripgrep/ripgreprc"
+  "$xdg/opencode/opencode.json"
 )
 for t in "${targets[@]}"; do
   if [[ -L "$t" ]]; then

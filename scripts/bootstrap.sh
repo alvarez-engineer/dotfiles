@@ -64,10 +64,21 @@ install_starship() {
   fi
 }
 
+install_opencode() {
+  if have opencode; then log "opencode already installed"; return 0; fi
+  log "installing opencode (official script)"
+  if [[ "$DOTFILES_DRY_RUN" == "true" ]]; then
+    printf 'DRY RUN: curl -fsSL https://opencode.ai/install | bash\n'
+  else
+    curl -fsSL https://opencode.ai/install | bash
+  fi
+}
+
 bootstrap_fedora() {
   info "Fedora: installing tools via dnf"
   sudo_run dnf install -y neovim tmux fzf ripgrep bat eza git-delta zsh fd-find git
   install_starship
+  install_opencode
   if [[ "$dev" == "true" ]]; then
     info "dev linters"
     sudo_run dnf install -y ShellCheck luarocks
@@ -84,6 +95,7 @@ bootstrap_debian() {
   sudo_run apt-get install -y git-delta || warn "git-delta not in apt; see delta releases page"
   warn "Debian names: 'bat' -> batcat, 'fd' -> fdfind (alias or symlink as desired)"
   install_starship
+  install_opencode
   if [[ "$dev" == "true" ]]; then
     info "dev linters"
     sudo_run apt-get install -y shellcheck luarocks || warn "install shellcheck/luarocks manually"
@@ -94,7 +106,7 @@ bootstrap_debian() {
 bootstrap_macos() {
   info "macOS: installing tools via Homebrew"
   have brew || die "Homebrew not found. Install it from https://brew.sh, then re-run."
-  run brew install neovim tmux fzf ripgrep bat eza git-delta starship zsh fd git
+  run brew install neovim tmux fzf ripgrep bat eza git-delta starship zsh fd git opencode
   run brew install --cask ghostty || warn "ghostty cask skipped (already installed?)"
   if [[ "$dev" == "true" ]]; then
     info "dev linters"

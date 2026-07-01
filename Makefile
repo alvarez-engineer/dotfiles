@@ -2,7 +2,7 @@ SHELL := /usr/bin/env bash
 
 .PHONY: install install-copy dry-run uninstall doctor backup validate check tree \
         bootstrap bootstrap-dev all \
-        install-shell install-git install-tmux install-nvim install-ghostty install-cli
+        install-shell install-git install-tmux install-nvim install-ghostty install-cli install-opencode
 
 # --- Bootstrap (install tool binaries; needs sudo on Linux) ----------------
 bootstrap:
@@ -32,6 +32,7 @@ install-tmux:    ; ./install.sh tmux
 install-nvim:    ; ./install.sh nvim
 install-ghostty: ; ./install.sh ghostty
 install-cli:     ; ./install.sh cli
+install-opencode:; ./install.sh opencode
 
 uninstall:
 	./scripts/uninstall.sh

@@ -17,6 +17,7 @@ all of them or just the ones you want.
 | `tmux`    | Themed `tmux.conf` | `~/.config/tmux/tmux.conf` |
 | `nvim`    | Minimal lazy.nvim setup + muted-ink colorscheme | `~/.config/nvim` |
 | `cli`     | bat, ripgrep, fzf (theming + config) | `~/.config/{bat,ripgrep}` |
+| `opencode`| opencode AI coding agent config + muted-ink theme | `~/.config/opencode` |
 
 ## Quick start
 
@@ -72,7 +73,7 @@ Full details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 - [Bootstrap (install the binaries)](docs/BOOTSTRAP.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- Modules: [Shell](docs/SHELL.md) · [Git](docs/GIT.md) · [tmux](docs/TMUX.md) · [Neovim](docs/NVIM.md) · [CLI tools](docs/CLI.md)
+- Modules: [Shell](docs/SHELL.md) · [Git](docs/GIT.md) · [tmux](docs/TMUX.md) · [Neovim](docs/NVIM.md) · [CLI tools](docs/CLI.md) · [opencode](docs/OPENCODE.md)
 - Ghostty: [macOS](docs/MACOS.md) · [Linux](docs/LINUX.md) · [Fonts](docs/FONTS.md) · [Themes](docs/THEMES.md) · [Keybindings](docs/KEYBINDS.md) · [Shell integration](docs/SHELL_INTEGRATION.md) · [Prompt](docs/PROMPT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md) · [Maintenance](docs/MAINTENANCE.md) · [Community cheatsheet](docs/COMMUNITY_CHEATSHEET.md) · [References](docs/REFERENCES.md)
 
