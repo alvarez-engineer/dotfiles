@@ -39,7 +39,8 @@ run() {
 backup_path() {
   local target="$1"
   if [[ -e "$target" || -L "$target" ]]; then
-    local backup="${target}.backup-$(date +%Y%m%d-%H%M%S)"
+    local backup
+    backup="${target}.backup-$(date +%Y%m%d-%H%M%S)"
     log "backup: $target -> $backup"
     run mv "$target" "$backup"
   fi

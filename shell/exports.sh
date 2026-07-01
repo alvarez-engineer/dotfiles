@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Environment variables. Sourced by bashrc and zshrc.
 # Safe to source in both bash and zsh.
 

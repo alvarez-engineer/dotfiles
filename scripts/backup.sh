@@ -5,7 +5,6 @@ set -euo pipefail
 # so you can roll back even after installing. Writes to ./backups/.
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-xdg="${XDG_CONFIG_HOME:-$HOME/.config}"
 backup_dir="$repo_root/backups"
 timestamp="$(date +%Y%m%d-%H%M%S)"
 archive="$backup_dir/dotfiles-backup-$timestamp.tar.gz"

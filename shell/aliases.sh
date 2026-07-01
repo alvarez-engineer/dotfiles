@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Aliases. Sourced by bashrc and zshrc. POSIX-compatible so both shells agree.
 
 # --- Listing: prefer eza, fall back to coloured ls ---
@@ -51,5 +52,5 @@ alias gsw='git switch'
 
 # --- misc ---
 alias reload='exec "$SHELL" -l'
-alias path='printf "%s\n" $PATH | tr ":" "\n"'
+alias path='printf "%s\n" "$PATH" | tr ":" "\n"'
 alias serve='python3 -m http.server'

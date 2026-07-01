@@ -71,6 +71,8 @@ for t in "${targets[@]}"; do
   esac
 
   if [[ "$restore_backup" == "true" ]]; then
+    # Backup names are timestamped (no special chars), so ls -t is safe here.
+    # shellcheck disable=SC2012
     latest="$(ls -1dt "${t}".backup-* 2>/dev/null | head -n 1 || true)"
     if [[ -n "$latest" ]]; then
       echo "Restoring: $latest -> $t"

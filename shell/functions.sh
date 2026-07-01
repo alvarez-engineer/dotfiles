@@ -1,19 +1,21 @@
+# shellcheck shell=bash
 # Shell functions. Sourced by bashrc and zshrc. Written to work in both.
 
 # mkcd DIR — create a directory and cd into it.
 mkcd() {
   [ -n "${1:-}" ] || { echo "usage: mkcd DIR" >&2; return 2; }
-  mkdir -p -- "$1" && cd -- "$1"
+  mkdir -p -- "$1" && cd -- "$1" || return
 }
 
 # up [N] — cd up N directories (default 1).
 up() {
-  local n="${1:-1}" path=""
+  # Note: avoid the name 'path' here — in zsh it is tied to $PATH.
+  local n="${1:-1}" rel=""
   case "$n" in
     ''|*[!0-9]*) echo "usage: up [N]" >&2; return 2 ;;
   esac
-  while [ "$n" -gt 0 ]; do path="../$path"; n=$((n - 1)); done
-  cd -- "$path" || return
+  while [ "$n" -gt 0 ]; do rel="../$rel"; n=$((n - 1)); done
+  cd -- "$rel" || return
 }
 
 # extract FILE — unpack most common archive formats.
@@ -45,5 +47,5 @@ fkill() {
 gcd() {
   local root
   root="$(git rev-parse --show-toplevel 2>/dev/null)" || { echo "not in a git repo" >&2; return 1; }
-  cd -- "$root"
+  cd -- "$root" || return
 }
