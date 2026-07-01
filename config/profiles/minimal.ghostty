@@ -1,0 +1,10 @@
+# Minimal overlay
+# Use this when troubleshooting or when platform-specific settings cause issues.
+
+background-opacity = 1
+background-blur = false
+window-padding-x = 6
+window-padding-y = 4
+copy-on-select = false
+shell-integration = detect
+shell-integration-features = cursor,title

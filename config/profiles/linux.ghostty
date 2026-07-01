@@ -1,0 +1,22 @@
+# Linux Ghostty overlay
+# Installed as config/profile.ghostty by scripts/install.sh on Linux.
+
+window-decoration = auto
+window-save-state = default
+quit-after-last-window-closed = true
+quit-after-last-window-closed-delay = 1s
+
+# GTK niceties
+# These are ignored outside GTK builds where unsupported.
+gtk-titlebar = true
+gtk-tabs-location = top
+gtk-wide-tabs = false
+
+# Quick terminal
+# Linux quick terminal support depends on Wayland and compositor support.
+quick-terminal-position = top
+quick-terminal-size = 45%
+quick-terminal-autohide = false
+quick-terminal-keyboard-interactivity = on-demand
+gtk-quick-terminal-layer = top
+keybind = ctrl+grave=toggle_quick_terminal

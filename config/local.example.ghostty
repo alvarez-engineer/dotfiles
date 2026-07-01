@@ -1,0 +1,23 @@
+# Copy this file to local.ghostty for private/machine-specific settings.
+# local.ghostty is ignored by Git.
+
+# Font size per display
+# font-size = 13
+
+# Fully opaque window
+# background-opacity = 1
+# background-blur = false
+
+# Built-in or custom theme
+# theme = muted-ink
+# theme = Catppuccin Frappe
+
+# Disable copy-on-select if you frequently select text without copying it.
+# copy-on-select = false
+
+# Disable Ghostty cursor changes at shell prompt.
+# shell-integration-features = no-cursor,title,ssh-env,ssh-terminfo
+
+# Disable quick terminal if it conflicts with your desktop shortcuts.
+# keybind = ctrl+grave=unbind
+# keybind = global:cmd+backquote=unbind

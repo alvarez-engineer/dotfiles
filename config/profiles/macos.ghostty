@@ -1,0 +1,33 @@
+# macOS Ghostty overlay
+# Installed as config/profile.ghostty by scripts/install.sh on Darwin.
+
+macos-titlebar-style = transparent
+macos-window-buttons = visible
+macos-option-as-alt = true
+macos-dock-drop-behavior = new-tab
+window-save-state = default
+quit-after-last-window-closed = false
+undo-timeout = 10s
+
+# Quick terminal
+# global keybinds require macOS Accessibility permission.
+quick-terminal-position = top
+quick-terminal-size = 45%
+quick-terminal-animation-duration = 0.18
+quick-terminal-autohide = true
+quick-terminal-space-behavior = move
+keybind = global:cmd+backquote=toggle_quick_terminal
+
+# macOS-friendly aliases in addition to shared ctrl+shift bindings.
+keybind = cmd+t=new_tab
+keybind = cmd+n=new_window
+keybind = cmd+w=close_surface
+keybind = cmd+shift+r=reload_config
+keybind = cmd+shift+o=open_config
+keybind = cmd+shift+f=start_search
+keybind = cmd+shift+p=toggle_command_palette
+keybind = cmd+enter=toggle_split_zoom
+keybind = cmd+d=new_split:right
+keybind = cmd+shift+d=new_split:down
+keybind = cmd+left=previous_tab
+keybind = cmd+right=next_tab

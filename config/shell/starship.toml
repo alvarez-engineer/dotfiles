@@ -1,0 +1,72 @@
+# Optional Starship prompt config.
+# Copy or symlink to ~/.config/starship.toml, then initialize Starship from your shell.
+# This is more feature-rich than the no-dependency bash/zsh snippets.
+
+format = "$directory$git_branch$git_status$python$nodejs$docker_context$kubernetes$cmd_duration$status$line_break$character"
+add_newline = false
+palette = "muted_ink"
+
+[palettes.muted_ink]
+text = "#c9d1d9"
+dim = "#6b7280"
+accent = "#7aa2a5"
+accent2 = "#8ba88b"
+warn = "#b8a06a"
+bad = "#b26a6a"
+
+[directory]
+style = "dim"
+truncation_length = 3
+truncate_to_repo = false
+format = "[$path]($style)"
+
+[git_branch]
+style = "accent"
+format = " [git:$branch]($style)"
+
+[git_status]
+style = "accent"
+format = "[$all_status$ahead_behind]($style)"
+conflicted = "!"
+ahead = "↑${count}"
+behind = "↓${count}"
+diverged = "↕${ahead_count}/${behind_count}"
+untracked = "?"
+stashed = "$"
+modified = "*"
+staged = "+"
+renamed = "»"
+deleted = "x"
+
+[python]
+style = "warn"
+format = " [py:${virtualenv}]($style)"
+python_binary = ["python3", "python"]
+
+[nodejs]
+style = "warn"
+format = " [node:$version]($style)"
+
+[docker_context]
+style = "dim"
+format = " [docker:$context]($style)"
+only_with_files = true
+
+[kubernetes]
+disabled = true
+style = "bad"
+format = " [k8s:$context/$namespace]($style)"
+
+[cmd_duration]
+min_time = 1500
+style = "dim"
+format = " [${duration}]($style)"
+
+[status]
+disabled = false
+style = "bad"
+format = " [exit:$status]($style)"
+
+[character]
+success_symbol = "[❯](accent)"
+error_symbol = "[❯](bad)"

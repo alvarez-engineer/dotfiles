@@ -1,0 +1,27 @@
+# Muted Ink
+# Dark theme with low-glare contrast and restrained blue/green/slate accents.
+
+background = 0D1117
+foreground = C9D1D9
+selection-background = 263241
+selection-foreground = E6EDF3
+cursor-color = 7AA2A5
+cursor-text = 0D1117
+minimum-contrast = 1.35
+
+palette = 0=0D1117
+palette = 1=B26A6A
+palette = 2=7A9B76
+palette = 3=B8A06A
+palette = 4=6F8FAF
+palette = 5=9A7EAA
+palette = 6=6E9A9A
+palette = 7=C9D1D9
+palette = 8=4B5563
+palette = 9=C47A7A
+palette = 10=8BAF87
+palette = 11=C7AE77
+palette = 12=7E9FBC
+palette = 13=AA8CBC
+palette = 14=7DABAB
+palette = 15=E6EDF3
