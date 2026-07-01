@@ -48,5 +48,8 @@ fi
 # Starship config path (symlinked by the shell module).
 export STARSHIP_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
 
+# opencode CLI installs to ~/.opencode/bin; add it to PATH when present.
+[ -d "$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
+
 # Less history / colored GCC diagnostics.
 export GCC_COLORS="error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01"
