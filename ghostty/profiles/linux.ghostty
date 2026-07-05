@@ -19,4 +19,4 @@ quick-terminal-size = 45%
 quick-terminal-autohide = false
 quick-terminal-keyboard-interactivity = on-demand
 gtk-quick-terminal-layer = top
-keybind = ctrl+grave=toggle_quick_terminal
+keybind = ctrl+backquote=toggle_quick_terminal
