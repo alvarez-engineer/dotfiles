@@ -60,6 +60,10 @@ if command -v fzf >/dev/null 2>&1; then
   fi
 fi
 
+# --- agent-sandbox completion (when the repo is checked out) ---
+[ -r "$HOME/projects/agent-sandbox/completions/agent-sandbox.bash" ] \
+  && . "$HOME/projects/agent-sandbox/completions/agent-sandbox.bash"
+
 # --- Prompt: Starship if available, otherwise the bundled muted prompt ---
 if command -v starship >/dev/null 2>&1; then
   eval "$(starship init bash)"
