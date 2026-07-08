@@ -50,6 +50,11 @@ alias gco='git checkout'
 alias gb='git branch'
 alias gsw='git switch'
 
+# --- agent-sandbox: short alias when the tool is on PATH ---
+if command -v agent-sandbox >/dev/null 2>&1; then
+  alias abox='agent-sandbox'
+fi
+
 # --- misc ---
 alias reload='exec "$SHELL" -l'
 alias path='printf "%s\n" "$PATH" | tr ":" "\n"'

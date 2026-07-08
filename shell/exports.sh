@@ -51,5 +51,9 @@ export STARSHIP_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
 # opencode CLI installs to ~/.opencode/bin; add it to PATH when present.
 [ -d "$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
 
+# agent-sandbox (sandboxed coding-agent runner) lives in its own repo; add its
+# bin/ to PATH when checked out.
+[ -d "$HOME/projects/agent-sandbox/bin" ] && export PATH="$HOME/projects/agent-sandbox/bin:$PATH"
+
 # Less history / colored GCC diagnostics.
 export GCC_COLORS="error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01"
