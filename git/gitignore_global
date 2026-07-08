@@ -31,3 +31,5 @@ node_modules/
 __pycache__/
 .venv/
 .direnv/
+
+**/.claude/settings.local.json
