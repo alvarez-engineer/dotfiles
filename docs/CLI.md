@@ -38,4 +38,14 @@ process to kill.
 ## eza
 
 Not configured via files — the `ls`/`ll`/`la`/`lt` aliases in `shell/aliases.sh`
-use `eza` when present and fall back to coloured `ls` otherwise.
+use `eza` when present. Without it they fall back to the system `ls`, with the
+flags chosen once at source time (GNU takes `--color=auto
+--group-directories-first`; BSD/macOS takes `-G`). `lt` (tree) is eza-only.
+See [SHELL.md](SHELL.md#the-ls-fallback-and-why-it-is-not-written-inside-the-alias).
+
+## Used by the notes module
+
+`bdf` previews notes with `bat` (or `batcat`, else `head`), and `bdg` searches
+note contents with `ripgrep` piped into `fzf`. `bdg` runs `rg --no-config` on
+purpose: the `RIPGREP_CONFIG_PATH` set above would otherwise change the
+`file:line:text` output shape that `bdg` parses.

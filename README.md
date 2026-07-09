@@ -18,6 +18,7 @@ all of them or just the ones you want.
 | `nvim`    | Minimal lazy.nvim setup + muted-ink colorscheme | `~/.config/nvim` |
 | `cli`     | bat, ripgrep, fzf (theming + config) | `~/.config/{bat,ripgrep}` |
 | `opencode`| opencode AI coding agent config + muted-ink theme | `~/.config/opencode` |
+| `notes`   | Plain-text brain dumps + a marker router into todo/question/remember lists | `~/.local/bin/{bd,bdsplit,bdf,bdg}`, `~/notes` |
 
 ## Quick start
 
@@ -49,7 +50,7 @@ make bootstrap       # install tool binaries (dnf/apt/brew); -dev adds linters
 make all             # bootstrap + install in one shot
 make install         # ./install.sh (configs only)
 make dry-run         # preview all actions
-make install-nvim    # one module (also: -shell -git -tmux -ghostty -cli -opencode)
+make install-nvim    # one module (also: -shell -git -tmux -ghostty -cli -opencode -notes)
 make doctor          # what's linked, what tools are missing
 make backup          # tarball all managed files to ./backups/ before changes
 make validate        # ghostty +validate-config (needs the ghostty CLI)
@@ -64,9 +65,23 @@ make check           # syntax + lint gate (bash/zsh/shellcheck/luacheck)
 - **Backups**: anything already at a target is moved to `<target>.backup-<ts>`.
 - **Nothing private in the repo**: identity/secrets/machine tweaks go in
   untracked local files (`~/.gitconfig.local`, `~/.bashrc.local`, …) that the
-  managed configs load last.
+  managed configs load **last**, so they override. Your notes live in
+  `$NOTES_DIR` (default `~/notes`) for the same reason — the `notes` module
+  ships the tooling, not the content.
+- **Degrades gracefully**: every tool is optional. Missing `delta` falls back to
+  `less`, missing `eza` to `ls`, missing `starship` to a bundled prompt. Config
+  for a tool you haven't installed just waits.
 - **One palette everywhere**: `muted-ink` is defined once and re-expressed per
   tool. See [docs/THEMES.md](docs/THEMES.md).
+
+## First run on a new machine
+
+```bash
+./install.sh --bootstrap        # tools, then configs
+$EDITOR ~/.gitconfig.local      # uncomment name/email — git will not commit until you do
+make doctor                     # everything linked? anything missing?
+exec "$SHELL" -l                # pick up the shell changes
+```
 
 Full details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -74,7 +89,7 @@ Full details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 - [Bootstrap (install the binaries)](docs/BOOTSTRAP.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- Modules: [Shell](docs/SHELL.md) · [Git](docs/GIT.md) · [tmux](docs/TMUX.md) · [Neovim](docs/NVIM.md) · [CLI tools](docs/CLI.md) · [opencode](docs/OPENCODE.md)
+- Modules: [Shell](docs/SHELL.md) · [Git](docs/GIT.md) · [tmux](docs/TMUX.md) · [Neovim](docs/NVIM.md) · [CLI tools](docs/CLI.md) · [opencode](docs/OPENCODE.md) · [notes](notes/README.md)
 - Ghostty: [macOS](docs/MACOS.md) · [Linux](docs/LINUX.md) · [Fonts](docs/FONTS.md) · [Themes](docs/THEMES.md) · [Keybindings](docs/KEYBINDS.md) · [Shell integration](docs/SHELL_INTEGRATION.md) · [Prompt](docs/PROMPT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md) · [Maintenance](docs/MAINTENANCE.md) · [Community cheatsheet](docs/COMMUNITY_CHEATSHEET.md) · [References](docs/REFERENCES.md)
 

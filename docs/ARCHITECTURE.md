@@ -15,7 +15,9 @@ config files plus an `install.sh`:
 ├── tmux/               # tmux.conf
 ├── nvim/               # lazy.nvim config + muted-ink colorscheme
 ├── cli/                # bat, ripgrep (fzf configured via env)
-├── scripts/            # cross-cutting: doctor, backup, uninstall
+├── opencode/           # opencode agent config + muted-ink theme
+├── notes/              # bd/bdsplit/bdf/bdg commands + the marker grammar
+├── scripts/            # cross-cutting: doctor, backup, uninstall, bootstrap
 └── docs/
 ```
 
@@ -52,6 +54,25 @@ get committed:
 | zsh     | `shell/zshrc`          | `~/.zshrc.local` |
 | git     | `git/gitconfig`        | `~/.gitconfig.local` (identity, signing keys) |
 | ghostty | `ghostty/config.ghostty` | `~/.config/ghostty/local.ghostty` |
+
+The `notes` module takes the same idea one step further: it ships the commands
+and the marker grammar, while the notes themselves live in `$NOTES_DIR`
+(default `~/notes`) — outside the repo entirely, and ideally its own git repo.
+See [../notes/README.md](../notes/README.md).
+
+## The quality gate
+
+`make check` is the only gate, and every leg of it must be able to *fail the
+build*. Three ways it silently could not, all since fixed and worth not
+reintroducing:
+
+- `bash -n a b c` parses only `a` and passes `b c` as positional arguments, so a
+  batched invocation checks exactly one file. Loop instead, one file per call.
+- `cmd1; cmd2` yields only `cmd2`'s status, so `cmd1`'s failure disappears.
+- `luacheck ... || true` swallows every Lua error.
+
+The gate skips a linter that isn't installed (so it exits 0 on a bare machine)
+but never skips one that *is*. CI installs all of them, on Linux and macOS.
 
 ## Theming
 

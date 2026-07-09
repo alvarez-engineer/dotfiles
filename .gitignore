@@ -5,3 +5,7 @@ backups/
 # OS / editor cruft
 .DS_Store
 *.swp
+
+# Per-machine Claude Code permissions. Ignored here as well as in the global
+# ignore, so a fresh clone is clean before the git module is ever installed.
+.claude/settings.local.json

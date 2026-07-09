@@ -62,26 +62,28 @@ font-size = 14
 
 ## Git branch is not showing
 
-The Git branch appears only when the shell prompt snippet is installed and the current directory is inside a Git worktree.
+The branch appears only inside a git worktree, and only once a prompt is active.
+`~/.bashrc` / `~/.zshrc` use starship when it is installed and otherwise source
+the bundled prompt from the repo — there is no "managed block" pasted into your
+rc file, and no `~/.config/ghostty/shell/` directory.
 
-Check that the managed block exists in `~/.zshrc` or `~/.bashrc`:
-
-```bash
-grep -n "ghostty muted coding prompt" ~/.zshrc ~/.bashrc 2>/dev/null
-```
-
-Confirm the prompt files exist:
+Check which prompt you are getting:
 
 ```bash
-ls ~/.config/ghostty/shell/
+command -v starship             # if present, starship owns the prompt
+ls ~/projects/dotfiles/shell/prompt/   # the bundled fallback lives in the repo
 ```
 
-Then restart the shell or source the relevant rc file:
+Confirm the rc files are the managed symlinks, then restart the shell:
 
 ```bash
-source ~/.zshrc
-source ~/.bashrc
+make doctor          # ~/.bashrc and ~/.zshrc should read "-> repo"
+exec "$SHELL" -l     # or: reload
 ```
+
+If starship is installed but the prompt looks unstyled, check
+`STARSHIP_CONFIG` (set in `shell/exports.sh`) points at an existing
+`~/.config/starship.toml`.
 
 ## Prompt is slow
 
@@ -137,3 +139,45 @@ rm -rf ~/.config/ghostty
 ```
 
 Only do this after backing up your existing config.
+
+## `ls somedir` lists the wrong directory
+
+Fixed — but if you are running an old checkout, this is the symptom of a
+fallback written *inside* the `ls` alias body. See
+[SHELL.md](SHELL.md#the-ls-fallback-and-why-it-is-not-written-inside-the-alias).
+Update and `reload`.
+
+## Git ignores what I set in `~/.gitconfig.local`
+
+The `[include]` in `git/gitconfig` must be the **last** line of the file, or the
+settings above it win. Verify the value git actually resolves:
+
+```bash
+git config --show-origin --get core.editor
+```
+
+## `bdsplit` did not route anything
+
+Routing is the "I'm finished" signal, so a dump with **no markers** is left in
+`inbox/` on purpose and reported as skipped. Check the grammar with:
+
+```bash
+bdsplit --dry-run     # prints every routing decision, changes nothing
+```
+
+Markers must start the line with at most 3 leading spaces (4+ is a markdown code
+block). Lines inside ``` fences and in YAML frontmatter are ignored, as is
+`- [x]`. A dump already routed lives in `archive/<YYYY-MM>/` — that is what makes
+re-running safe.
+
+## `make check` passes but something is obviously broken
+
+Each linter is *skipped when its binary is absent*, so a bare machine exits 0
+having checked very little. Install the linters and re-run:
+
+```bash
+make bootstrap-dev    # shellcheck + luacheck
+make check
+```
+
+Any script not listed in `SH_FILES` in the `Makefile` is never linted at all.

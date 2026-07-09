@@ -4,12 +4,30 @@ on:
   push:
   pull_request:
 
+# The gate only reads the tree. Public repos get a token on every run, so drop
+# it to read-only rather than inheriting the repository default.
+permissions:
+  contents: read
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # macOS is half the repo's promise; lint it there too. Several bugs this
+        # gate now catches were macOS-only (BSD ls, Homebrew paths).
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
-      - name: Install linters
+
+      - name: Install linters (Linux)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y shellcheck zsh lua-check
+
+      - name: Install linters (macOS)
+        if: runner.os == 'macOS'
+        run: brew install shellcheck luacheck
+
       - name: Run checks
         run: make check
