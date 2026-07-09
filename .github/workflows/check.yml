@@ -34,7 +34,10 @@ jobs:
         # gate now catches were macOS-only (BSD ls, Homebrew paths).
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v7
+      # Pinned to a commit SHA, not the mutable `v7` tag: whoever controls the
+      # tag can repoint it, and CI runs the action with a token. Dependabot
+      # reads the trailing comment and bumps both the SHA and the version.
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Install zsh, Lua and luarocks (Linux)
         if: runner.os == 'Linux'
