@@ -158,17 +158,22 @@ git config --show-origin --get core.editor
 
 ## `bdsplit` did not route anything
 
-Routing is the "I'm finished" signal, so a dump with **no markers** is left in
-`inbox/` on purpose and reported as skipped. Check the grammar with:
+Routing is the "I'm finished" signal, so a dump with prose but **no markers** is
+left in `inbox/` on purpose and reported as `skip:`. If the dump really is
+finished and produced nothing worth routing, say that with `~` — it routes to
+`optimizations.md` and the dump gets archived like any other. A dump holding
+nothing but frontmatter is reported as `empty:` and archived without routing.
+
+Check the grammar with:
 
 ```bash
 bdsplit --dry-run     # prints every routing decision, changes nothing
 ```
 
 Markers must start the line with at most 3 leading spaces (4+ is a markdown code
-block). Lines inside ``` fences and in YAML frontmatter are ignored, as is
-`- [x]`. A dump already routed lives in `archive/<YYYY-MM>/` — that is what makes
-re-running safe.
+block). Lines inside ``` fences and in YAML frontmatter are ignored, as are the
+checked `[x]` and `- [x]`. A dump already routed lives in `archive/<YYYY-MM>/` —
+that is what makes re-running safe.
 
 ## `make check` passes but something is obviously broken
 

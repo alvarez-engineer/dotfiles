@@ -35,8 +35,10 @@ local function prepend(marker)
   return function()
     local row = vim.api.nvim_win_get_cursor(0)[1]
     local line = vim.api.nvim_get_current_line()
-    -- Replace an existing marker rather than stacking them.
-    local body = line:gsub("^(%s*)%- %[[ xX]%] ", "%1"):gsub("^(%s*)[?!] ", "%1")
+    -- Replace an existing marker rather than stacking them. The optional "- "
+    -- and the space inside the brackets cover every todo form bdsplit accepts:
+    -- "[]", "[ ]", "- []", "- [ ]", and the checked "[x]" variants.
+    local body = line:gsub("^(%s*)%-? ?%[[ xX]?%] ", "%1"):gsub("^(%s*)[%?!~] ", "%1")
     local indent, rest = body:match("^(%s*)(.*)$")
     vim.api.nvim_set_current_line(indent .. marker .. rest)
     vim.api.nvim_win_set_cursor(0, { row, #(indent .. marker) })
@@ -47,6 +49,7 @@ local map = function(lhs, marker, desc)
   vim.keymap.set("n", lhs, prepend(marker), { buffer = true, desc = desc })
 end
 
-map("<localleader>t", "- [ ] ", "Note: mark line as todo")
+map("<localleader>t", "[] ", "Note: mark line as todo")
 map("<localleader>q", "? ", "Note: mark line as question")
 map("<localleader>r", "! ", "Note: mark line as remember")
+map("<localleader>o", "~ ", "Note: mark line as optimization")

@@ -18,7 +18,7 @@ all of them or just the ones you want.
 | `nvim`    | Minimal lazy.nvim setup + muted-ink colorscheme | `~/.config/nvim` |
 | `cli`     | bat, ripgrep, fzf (theming + config) | `~/.config/{bat,ripgrep}` |
 | `opencode`| opencode AI coding agent config + muted-ink theme | `~/.config/opencode` |
-| `notes`   | Plain-text brain dumps + a marker router into todo/question/remember lists | `~/.local/bin/{bd,bdsplit,bdf,bdg}`, `~/notes` |
+| `notes`   | Plain-text brain dumps + a marker router into standing lists | `~/.local/bin/{bd,bdsplit,bdf,bdg}`, `~/notes` |
 
 ## Quick start
 
@@ -59,10 +59,12 @@ Make sure `~/.local/bin` is on your `PATH`, then:
 ```bash
 bd "hiring loop"             # new dump in ~/notes/inbox, opens $EDITOR
                              # write freely; mark the lines that should escape:
-                             #   - [ ] a todo      ? a question      ! remember this
+                             #   [] a todo         ? a question
+                             #   !  remember this  ~ this produced nothing
 bdsplit --dry-run            # show what would be routed, change nothing
-bdsplit                      # file each marked line into todo/questions/remember.md,
-                             # then archive the dump under ~/notes/archive/YYYY-MM/
+bdsplit                      # file each marked line into todo/questions/
+                             # remember/optimizations.md, then archive the dump
+                             # under ~/notes/archive/YYYY-MM/
 ```
 
 Your notes live in `$NOTES_DIR` (default `~/notes`), **outside this repo** —
