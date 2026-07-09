@@ -4,16 +4,28 @@ set -euo pipefail
 # bdsplit — route marked lines out of brain dumps into the standing lists.
 #
 # Markers (line start, at most 3 leading spaces):
-#   - [ ] text   ->  todo.md       (appended verbatim)
-#   ? text       ->  questions.md  (appended as "- text")
-#   ! text       ->  remember.md   (appended as "- text")
+#   [] text      ->  todo.md          (appended as "- [ ] text")
+#   ? text       ->  questions.md     (appended as "- text")
+#   ! text       ->  remember.md      (appended as "- text")
+#   ~ text       ->  optimizations.md (appended as "- text")
+#
+# The todo marker also accepts "[ ]", "- []" and "- [ ]" — the last is what
+# todo.md already contains and what an editor's checkbox support writes. All
+# four normalize to "- [ ] text" on the way out.
 #
 # Lines inside ``` / ~~~ fences and inside leading YAML frontmatter are ignored,
 # as are already-checked "- [x]" items. Everything else stays in the dump.
 #
 # A routed dump moves to archive/<YYYY-MM>/, which is what makes re-running safe:
-# it is no longer in inbox/, so it cannot be routed twice. Dumps with no markers
-# are left in inbox/ untouched — routing is the "I'm finished" signal.
+# it is no longer in inbox/, so it cannot be routed twice. A dump with prose but
+# no markers is left in inbox/ untouched — routing is the "I'm finished" signal,
+# and an unfinished dump must stay where bdsplit will look at it again. The one
+# exception is a dump with nothing in it at all (see is_empty): there is no
+# unfinished thought to protect, so it is archived rather than parked forever.
+#
+# `~` exists so "this produced nothing" is sayable. Without it, a finished dump
+# and an unfinished one are the same file, and the grammar quietly implies every
+# dump must yield a todo, a question, or a fact.
 
 NOTES_DIR="${NOTES_DIR:-$HOME/notes}"
 
@@ -21,9 +33,9 @@ usage() {
   cat <<'EOF'
 Usage: bdsplit [OPTIONS] [FILE ...]
 
-Routes marked lines out of brain dumps into todo.md, questions.md and
-remember.md, then archives each dump it routed. With no FILE, processes every
-*.md in $NOTES_DIR/inbox.
+Routes marked lines out of brain dumps into todo.md, questions.md, remember.md
+and optimizations.md, then archives each dump it routed. With no FILE, processes
+every *.md in $NOTES_DIR/inbox.
 
 Options:
   --dry-run    print what would be routed and moved, change nothing
@@ -36,9 +48,13 @@ Environment:
   NOTES_DIR    notes root (default: ~/notes)
 
 Markers, with at most 3 leading spaces:
-  - [ ] text   -> todo.md        ("- [x]" is skipped)
+  [] text      -> todo.md           (also "[ ]", "- []", "- [ ]"; "[x]" skipped)
   ? text       -> questions.md
   ! text       -> remember.md
+  ~ text       -> optimizations.md  ("that meeting produced nothing")
+
+A dump with prose but no markers stays in inbox/ — you are still writing it.
+A dump with nothing in it but frontmatter is archived.
 EOF
 }
 
@@ -117,11 +133,51 @@ extract() {
     # Markdown treats 4+ spaces as an indented code block.
     indent > 3 { next }
 
-    rest ~ /^- \[[xX]\][ \t]/ { next }
-    rest ~ /^- \[ \][ \t]/    { print "todo\t" rest; next }
-    rest ~ /^\?[ \t]/         { print "questions\t- " trim(substr(rest, 2)); next }
-    rest ~ /^![ \t]/          { print "remember\t- " trim(substr(rest, 2)); next }
+    # Checked items first — an already-done todo is not a todo.
+    rest ~ /^(- )?\[[xX]\][ \t]/ { next }
+
+    # "[]", "[ ]", "- []" and "- [ ]" all mean the same thing. match() sets
+    # RLENGTH to the width of whichever form was used, so one rule strips them
+    # all and re-emits the canonical "- [ ] text".
+    rest ~ /^(- )?\[ ?\][ \t]/ {
+      match(rest, /^(- )?\[ ?\]/)
+      print "todo\t- [ ] " trim(substr(rest, RLENGTH + 1))
+      next
+    }
+
+    # None of these three is markdown syntax at line start, so none can be
+    # scraped out of ordinary prose. "~ x" is safe in particular because a fence
+    # needs three tildes, and the fence rule above has already consumed those.
+    rest ~ /^\?[ \t]/ { print "questions\t- " trim(substr(rest, 2)); next }
+    rest ~ /^![ \t]/  { print "remember\t- " trim(substr(rest, 2)); next }
+    rest ~ /^~[ \t]/  { print "optimizations\t- " trim(substr(rest, 2)); next }
   ' "$1"
+}
+
+# is_empty FILE — true when nothing but leading frontmatter and blank lines.
+#
+# `bd` writes the template *before* handing the file to $EDITOR, so quitting
+# without typing leaves a dump nobody wrote. It has no markers, so it is not
+# routed; it has no prose, so leaving it in inbox/ protects nothing. Archive it.
+#
+# An unterminated frontmatter block (`---` opened, never closed) reads as empty
+# here because every line is swallowed by in_fm. Call that non-empty instead:
+# leaving a dump in inbox/ is the recoverable mistake, archiving one is not.
+is_empty() {
+  awk '
+    BEGIN { in_fm = 0; body = 0 }
+    NR == 1 && /^---[ \t]*$/ { in_fm = 1; next }
+    in_fm && /^---[ \t]*$/   { in_fm = 0; next }
+    in_fm                    { next }
+    /[^ \t]/                 { body = 1; exit }
+    END { exit (body || in_fm) ? 1 : 0 }
+  ' "$1"
+}
+
+# archive_dump FILE MONTH BASE
+archive_dump() {
+  run mkdir -p "$NOTES_DIR/archive/$2"
+  run mv -- "$1" "$NOTES_DIR/archive/$2/$3"
 }
 
 # ensure_list_gap FILE — markdown only renders a list as a list when a blank line
@@ -142,6 +198,7 @@ ensure_list_gap() {
 routed_total=0
 routed_files=0
 skipped=0
+emptied=0
 
 for f in "${files[@]}"; do
   if [[ ! -f "$f" ]]; then
@@ -151,6 +208,14 @@ for f in "${files[@]}"; do
 
   base="$(basename -- "$f")"
 
+  # Archive under the dump's own month, taken from its filename, not today's
+  # date — routing an old dump should file it where it belongs.
+  if [[ "$base" =~ ^([0-9]{4}-[0-9]{2})-[0-9]{2} ]]; then
+    month="${BASH_REMATCH[1]}"
+  else
+    month="$(date +%Y-%m)"
+  fi
+
   # Route first, into a temp file. Only once that succeeds do we touch the
   # destinations or move the source, so a failure leaves the dump in inbox/.
   hits="$tmp/hits"
@@ -158,17 +223,20 @@ for f in "${files[@]}"; do
 
   count="$(wc -l <"$hits" | tr -d ' ')"
   if [[ "$count" -eq 0 ]]; then
-    echo "skip: $base (no markers)"
-    skipped=$((skipped + 1))
+    if ! is_empty "$f"; then
+      echo "skip: $base (no markers)"
+      skipped=$((skipped + 1))
+    elif [[ "$keep" == "true" ]]; then
+      # --keep means "move nothing", and an empty dump has nothing to route, so
+      # there is no work left to do on it at all.
+      echo "empty: $base (kept)"
+      skipped=$((skipped + 1))
+    else
+      echo "empty: $base -> archive/$month/"
+      archive_dump "$f" "$month" "$base"
+      emptied=$((emptied + 1))
+    fi
     continue
-  fi
-
-  # Archive under the dump's own month, taken from its filename, not today's
-  # date — routing an old dump should file it where it belongs.
-  if [[ "$base" =~ ^([0-9]{4}-[0-9]{2})-[0-9]{2} ]]; then
-    month="${BASH_REMATCH[1]}"
-  else
-    month="$(date +%Y-%m)"
   fi
 
   if [[ "$keep" == "true" ]]; then
@@ -180,7 +248,7 @@ for f in "${files[@]}"; do
   if [[ "$dry_run" == "true" ]]; then
     printf 'route: %s (%s item(s))\n' "$base" "$count"
     while IFS=$'\t' read -r dest line; do
-      printf '  -> %-13s %s\n' "$dest.md" "$line"
+      printf '  -> %-16s %s\n' "$dest.md" "$line"
     done <"$hits"
   else
     while IFS=$'\t' read -r dest line; do
@@ -191,15 +259,14 @@ for f in "${files[@]}"; do
   fi
 
   if [[ "$keep" != "true" ]]; then
-    run mkdir -p "$NOTES_DIR/archive/$month"
-    run mv -- "$f" "$NOTES_DIR/archive/$month/$base"
+    archive_dump "$f" "$month" "$base"
   fi
 
   routed_total=$((routed_total + count))
   routed_files=$((routed_files + 1))
 done
 
-if [[ "$routed_files" -eq 0 ]]; then
+if [[ "$routed_files" -eq 0 && "$emptied" -eq 0 ]]; then
   if [[ "$skipped" -gt 0 ]]; then
     echo "nothing to route ($skipped dump(s) had no markers)"
   else
@@ -208,14 +275,25 @@ if [[ "$routed_files" -eq 0 ]]; then
   exit 0
 fi
 
-printf 'routed %d item(s) from %d dump(s)\n' "$routed_total" "$routed_files"
+if [[ "$routed_files" -gt 0 ]]; then
+  printf 'routed %d item(s) from %d dump(s)\n' "$routed_total" "$routed_files"
+fi
+if [[ "$emptied" -gt 0 ]]; then
+  printf 'archived %d empty dump(s)\n' "$emptied"
+fi
 
 if [[ "$do_commit" == "true" ]]; then
   if ! git -C "$NOTES_DIR" rev-parse --git-dir >/dev/null 2>&1; then
     echo "bdsplit: --commit: $NOTES_DIR is not a git repo" >&2
     exit 1
   fi
-  msg="notes: route $routed_total item(s) from $routed_files dump(s)"
+  if [[ "$routed_files" -gt 0 && "$emptied" -gt 0 ]]; then
+    msg="notes: route $routed_total item(s) from $routed_files dump(s), archive $emptied empty dump(s)"
+  elif [[ "$routed_files" -gt 0 ]]; then
+    msg="notes: route $routed_total item(s) from $routed_files dump(s)"
+  else
+    msg="notes: archive $emptied empty dump(s)"
+  fi
   run git -C "$NOTES_DIR" add -A
   run git -C "$NOTES_DIR" commit -q -m "$msg"
   # git push is host-agnostic: it reads origin and does the right thing whether

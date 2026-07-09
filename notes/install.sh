@@ -31,7 +31,7 @@ seed_file() {
   fi
 }
 
-for f in todo questions remember; do
+for f in todo questions remember optimizations; do
   seed_file "$src/skel/$f.md" "$notes_dir/$f.md"
 done
 
@@ -48,7 +48,7 @@ have fzf || log "fzf not installed; bdf/bdg will be ready once it is"
 have rg  || log "ripgrep not installed; bdg will be ready once it is"
 
 cat <<EOF
-  markers: '- [ ] todo'  '? question'  '! remember'
+  markers: '[] todo'  '? question'  '! remember'  '~ waste of time'
   capture: bd "some title"      route: bdsplit --dry-run
   details: $src/README.md
 EOF
