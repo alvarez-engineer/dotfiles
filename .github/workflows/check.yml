@@ -14,9 +14,15 @@ permissions:
 # check that has nothing to do with the platform (SC2015 did exactly this).
 # Pinning also means `make check` locally and in CI are the same gate — bump
 # these deliberately, not by whichever mirror updated first.
+#
+# LUA_VERSION is pinned too, not just LUACHECK_VERSION: luacheck 1.2.0 does not
+# run on Lua 5.5 (it assigns to a variable 5.5 made const), and brew's luarocks
+# defaults to 5.5. Pinning the tool without pinning its interpreter is only half
+# a pin.
 env:
   SHELLCHECK_VERSION: "0.11.0"
   LUACHECK_VERSION: "1.2.0"
+  LUA_VERSION: "5.4"
 
 jobs:
   check:
@@ -30,14 +36,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install zsh and luarocks (Linux)
+      - name: Install zsh, Lua and luarocks (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y zsh lua5.4 liblua5.4-dev luarocks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh "lua${LUA_VERSION}" "liblua${LUA_VERSION}-dev" luarocks
 
-      - name: Install luarocks (macOS)
+      - name: Install Lua and luarocks (macOS)
         if: runner.os == 'macOS'
         # zsh is the default shell on macOS runners; nothing to install for it.
-        run: brew install luarocks
+        # lua@5.4 is keg-only, so luarocks needs to be pointed at it explicitly
+        # in the next step -- brew's luarocks otherwise builds against Lua 5.5.
+        run: brew install "lua@${LUA_VERSION}" luarocks
 
       - name: Install pinned shellcheck
         run: |
@@ -57,11 +67,18 @@ jobs:
       - name: Install pinned luacheck
         run: |
           set -euo pipefail
-          luarocks install --local "luacheck" "$LUACHECK_VERSION"
+          args=(--lua-version "$LUA_VERSION")
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            args+=(--lua-dir "$(brew --prefix "lua@${LUA_VERSION}")")
+          fi
+          luarocks "${args[@]}" install --local luacheck "$LUACHECK_VERSION"
           echo "$HOME/.luarocks/bin" >> "$GITHUB_PATH"
 
       - name: Show linter versions
         # If a leg ever disagrees with the other, this is the first place to look.
+        # It also guards the gate: `make check` skips a linter that is absent, so
+        # a silently-failed install above would let the gate pass having checked
+        # nothing. This step runs under `bash -e`, so a missing binary fails here.
         run: |
           shellcheck --version | sed -n 's/^version: /shellcheck /p'
           luacheck --version | head -1
