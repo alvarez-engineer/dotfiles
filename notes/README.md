@@ -67,6 +67,44 @@ bdf                           # fuzzy-open a note by filename    (needs fzf)
 bdg staging                   # search note contents, open a hit (needs rg + fzf)
 ```
 
+## Choosing the editor
+
+`bd`, `bdf`, and `bdg` run `${EDITOR:-vi}`. Nothing here pins an editor, so set
+it wherever you set the rest of your environment — `~/.bashrc.local` /
+`~/.zshrc.local` if you use this repo's `shell` module, `~/.profile` otherwise:
+
+```bash
+export EDITOR="nvim"
+export VISUAL="$EDITOR"          # some programs read VISUAL first
+```
+
+Prefix a single command to override it once: `EDITOR=nano bd "quick thought"`.
+
+**A GUI editor needs its wait flag**, or it forks, exits immediately, and `bd`
+returns before you have typed anything:
+
+```bash
+export EDITOR="code -w"          # VS Code
+export EDITOR="cursor -w"        # Cursor -- broken on macOS, see below
+export EDITOR="subl -w"          # Sublime Text
+export EDITOR="zed -w"           # Zed
+export EDITOR="gvim -f"          # gVim, -f for "foreground"
+export VISUAL="$EDITOR"
+```
+
+`EDITOR` is split on whitespace, so `"code -w"` works but an editor path
+containing spaces does not — put a wrapper script on `PATH` for that. `cursor -w`
+is fine on Linux, but Cursor's `--wait` crashes on macOS with `Unable to find
+helper app`; use `code -w` there. (`cursor` is the GUI launcher — `cursor-agent`
+is a different binary and is not an editor.)
+
+**Obsidian cannot be an `$EDITOR`.** It is a vault browser with no wait flag, and
+its `obsidian://` URI only opens files already inside a registered vault. Point
+`EDITOR` at a real editor and open `$NOTES_DIR` as a vault beside it — these are
+plain markdown files in a plain directory, so both tools see the same notes with
+no integration at all. Obsidian writes a `.obsidian/` directory into the vault
+root; add it to `$NOTES_DIR/.gitignore` if you version your notes.
+
 ## Why it works this way
 
 **Routing is the finalization signal.** A dump with no markers is left in

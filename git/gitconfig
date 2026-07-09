@@ -11,7 +11,10 @@
 [core]
 	# Use delta when installed; fall back to less otherwise.
 	pager = delta || less
-	editor = nvim
+	# No `editor` here on purpose: unset, git falls back to $VISUAL, then
+	# $EDITOR (set by shell/exports.sh), then vi. Setting core.editor to a
+	# specific binary here would override that for every machine. Pin one in
+	# ~/.gitconfig.local if you want git to differ from your shell's $EDITOR.
 	autocrlf = input
 	excludesfile = ~/.config/git/ignore
 

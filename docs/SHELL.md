@@ -16,15 +16,58 @@ finally your machine-local override file.
 
 ## Shared modules (sourced by both shells)
 
-- `shell/exports.sh` — `EDITOR`/`VISUAL` (nvim→vim→vi), `PAGER`/`LESS`, bat as
-  the man pager, `RIPGREP_CONFIG_PATH`, `FZF_DEFAULT_OPTS` (muted-ink colors),
-  `STARSHIP_CONFIG`, `NOTES_DIR` (the `notes` module).
+- `shell/exports.sh` — `EDITOR`/`VISUAL` (inherited if already set, else
+  nvim→vim→vi), `PAGER`/`LESS`, bat as the man pager, `RIPGREP_CONFIG_PATH`,
+  `FZF_DEFAULT_OPTS` (muted-ink colors), `STARSHIP_CONFIG`, `NOTES_DIR`.
 - `shell/aliases.sh` — `ls`/`ll`/`la` (eza when present, otherwise `ls`), `cat`→bat,
   grep colors, `..`/`...` navigation, git shortcuts, `reload`, `serve`.
 - `shell/functions.sh` — `mkcd`, `up [N]`, `extract`, `fkill` (fzf), `gcd`.
 
 Aliases and functions are written in POSIX-compatible form so bash and zsh
 behave the same.
+
+### Changing the editor
+
+`exports.sh` only probes for nvim→vim→vi when `EDITOR` is **unset**, so anything
+that already exported it (`~/.profile`, an ssh client, `EDITOR=hx tmux new`)
+survives. Nothing else in the repo pins an editor: git resolves `$VISUAL` then
+`$EDITOR`, and `bd`/`bdf`/`bdg` run `${EDITOR:-vi}`. To change it everywhere, set
+it in `~/.bashrc.local` / `~/.zshrc.local`, which are sourced last:
+
+```bash
+export EDITOR="hx"
+export VISUAL="$EDITOR"
+```
+
+**A GUI editor must block until you close the file.** Terminal editors hold the
+foreground already; a GUI one usually forks and exits immediately, and git reads
+the unchanged commit message and aborts. Pass the editor's wait flag:
+
+```bash
+export EDITOR="code -w"       # VS Code
+export EDITOR="cursor -w"     # Cursor -- see the macOS caveat below
+export EDITOR="subl -w"       # Sublime Text
+export EDITOR="zed -w"        # Zed
+export EDITOR="gvim -f"       # gVim, -f for "foreground"
+export VISUAL="$EDITOR"
+```
+
+`EDITOR` is split on whitespace when it is run, so `"code -w"` works, but a path
+containing spaces does not. Wrap those in a script on `PATH` instead.
+
+**Cursor.** It is a VS Code fork, so `cursor -w` is the same flag and works on
+Linux. Two known problems, neither ours to fix: on macOS `cursor --wait` has
+crashed with `Unable to find helper app` (an Electron packaging bug, open across
+2.0.77–2.1.42), and Cursor mishandles repository paths containing spaces. Since
+this repo targets macOS as a first-class platform, do not assume `cursor -w` in
+a shared config — test it on the machine, and keep `code -w` as the fallback.
+Note also that `cursor` is the GUI launcher; `cursor-agent` is a different
+binary (the coding agent) and is not an `$EDITOR`.
+
+Some editors have no wait flag at all. **Obsidian is one** — it is a vault
+browser, not a `$EDITOR`, and it cannot be handed a scratch file and waited on.
+Point `EDITOR` at a real editor and let Obsidian open `$NOTES_DIR` as a vault
+alongside it; the notes are plain markdown, so both see the same files.
 
 ### The `ls` fallback, and why it is not written inside the alias
 

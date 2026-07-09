@@ -34,10 +34,34 @@ work overrides. This keeps personal data out of a public repo.
 
 Git applies an include *where it appears*, and for a single-valued key the last
 value read wins. An `[include]` at the top of `gitconfig` would therefore be
-overridden by everything below it: setting `core.editor` in `~/.gitconfig.local`
-would silently lose to the `editor = nvim` in the tracked file. Keeping the
-include last is what makes "local overrides win" actually true — the same
+overridden by everything below it: setting `core.pager` in `~/.gitconfig.local`
+would silently lose to the `pager = delta || less` in the tracked file. Keeping
+the include last is what makes "local overrides win" actually true — the same
 ordering `~/.bashrc.local` and `local.ghostty` rely on.
+
+## Which editor git opens
+
+`core.editor` is deliberately **not set**. Git then resolves, in order:
+`$GIT_EDITOR`, `core.editor`, `$VISUAL`, `$EDITOR`, and finally `vi` — so git
+opens whatever your shell already opens, and there is one place to change it
+(`shell/exports.sh`, or `EDITOR` in `~/.bashrc.local`). Check what git resolved:
+
+```bash
+git var GIT_EDITOR
+```
+
+To give git a *different* editor than your shell, set it in `~/.gitconfig.local`:
+
+```ini
+[core]
+	editor = nvim
+```
+
+A GUI editor must be told to block until the file is closed, or git sees an
+unmodified message and aborts the commit: `editor = code -w`, `subl -w`,
+`zed -w`, `cursor -w`. Terminal editors already block. See
+[SHELL.md](SHELL.md#changing-the-editor) for the caveats — notably that
+`cursor --wait` is broken on macOS and that Obsidian cannot be a `$EDITOR`.
 
 ## Delta pager
 

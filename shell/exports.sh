@@ -2,14 +2,24 @@
 # Environment variables. Sourced by bashrc and zshrc.
 # Safe to source in both bash and zsh.
 
-# Preferred editor: nvim > vim > vi.
-if command -v nvim >/dev/null 2>&1; then
-  export EDITOR="nvim"
-elif command -v vim >/dev/null 2>&1; then
-  export EDITOR="vim"
-else
-  export EDITOR="vi"
+# Preferred editor: nvim > vim > vi. An EDITOR inherited from the environment
+# (~/.profile, an ssh client, `EDITOR=hx tmux new`) wins over the probe.
+if [ -z "${EDITOR:-}" ]; then
+  if command -v nvim >/dev/null 2>&1; then
+    EDITOR="nvim"
+  elif command -v vim >/dev/null 2>&1; then
+    EDITOR="vim"
+  else
+    EDITOR="vi"
+  fi
 fi
+export EDITOR
+# VISUAL mirrors EDITOR unconditionally -- do NOT write ${VISUAL:-$EDITOR}.
+# git prefers VISUAL over EDITOR (`git var GIT_EDITOR`: GIT_EDITOR, core.editor,
+# VISUAL, EDITOR, vi), and exports.sh exports VISUAL, so a subshell always
+# inherits one. Honoring that stale VISUAL would make `EDITOR=hx git commit`
+# silently open the old editor. Want them to differ? Set VISUAL in ~/.*rc.local,
+# which is sourced after this file.
 export VISUAL="$EDITOR"
 
 # Pager. less with sane, color-friendly defaults.
