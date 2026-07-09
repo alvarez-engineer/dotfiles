@@ -70,7 +70,10 @@ while [[ -L "$self" ]]; do
     *)  self="$(cd -- "$(dirname -- "$self")" && pwd)/$target" ;;
   esac
 done
-skel="$(cd -- "$(dirname -- "$self")/../skel" 2>/dev/null && pwd || true)"
+# `|| skel=""` rather than an inline `cd && pwd || true`: in `A && B || C` the
+# fallback C also runs when A succeeds and B fails, which would mask a real
+# failure. Older shellcheck flags that shape as SC2015; this form is unambiguous.
+skel="$(cd -- "$(dirname -- "$self")/../skel" 2>/dev/null && pwd)" || skel=""
 
 # --- stdin append mode -------------------------------------------------------
 if [[ "${args[0]:-}" == "-" ]]; then
