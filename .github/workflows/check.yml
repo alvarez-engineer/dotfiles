@@ -34,7 +34,7 @@ jobs:
         # gate now catches were macOS-only (BSD ls, Homebrew paths).
         os: [ubuntu-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install zsh, Lua and luarocks (Linux)
         if: runner.os == 'Linux'
