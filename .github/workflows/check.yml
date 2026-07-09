@@ -9,6 +9,15 @@ on:
 permissions:
   contents: read
 
+# Pin the linters. Distro packages disagree: apt shipped shellcheck 0.9 while
+# brew shipped 0.11, so a run could pass on one leg and fail on the other for a
+# check that has nothing to do with the platform (SC2015 did exactly this).
+# Pinning also means `make check` locally and in CI are the same gate — bump
+# these deliberately, not by whichever mirror updated first.
+env:
+  SHELLCHECK_VERSION: "0.11.0"
+  LUACHECK_VERSION: "1.2.0"
+
 jobs:
   check:
     runs-on: ${{ matrix.os }}
@@ -21,13 +30,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install linters (Linux)
+      - name: Install zsh and luarocks (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y shellcheck zsh lua-check
+        run: sudo apt-get update && sudo apt-get install -y zsh lua5.4 liblua5.4-dev luarocks
 
-      - name: Install linters (macOS)
+      - name: Install luarocks (macOS)
         if: runner.os == 'macOS'
-        run: brew install shellcheck luacheck
+        # zsh is the default shell on macOS runners; nothing to install for it.
+        run: brew install luarocks
+
+      - name: Install pinned shellcheck
+        run: |
+          set -euo pipefail
+          os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+          case "$(uname -m)" in
+            aarch64|arm64) arch="aarch64" ;;
+            x86_64|amd64)  arch="x86_64" ;;
+            *) echo "unsupported arch: $(uname -m)" >&2; exit 1 ;;
+          esac
+          url="https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.${os}.${arch}.tar.xz"
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL "$url" | tar -xJ -C "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP/shellcheck-v${SHELLCHECK_VERSION}/shellcheck" "$RUNNER_TEMP/bin/"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Install pinned luacheck
+        run: |
+          set -euo pipefail
+          luarocks install --local "luacheck" "$LUACHECK_VERSION"
+          echo "$HOME/.luarocks/bin" >> "$GITHUB_PATH"
+
+      - name: Show linter versions
+        # If a leg ever disagrees with the other, this is the first place to look.
+        run: |
+          shellcheck --version | sed -n 's/^version: /shellcheck /p'
+          luacheck --version | head -1
+          zsh --version
 
       - name: Run checks
         run: make check
