@@ -52,6 +52,10 @@ targets=(
   "$xdg/opencode/opencode.json"
   "$xdg/opencode/tui.json"
   "$xdg/opencode/themes/muted-ink.json"
+  "$HOME/.local/bin/bd"
+  "$HOME/.local/bin/bdsplit"
+  "$HOME/.local/bin/bdf"
+  "$HOME/.local/bin/bdg"
 )
 
 run() { if [[ "$dry_run" == "true" ]]; then printf 'DRY RUN: %s\n' "$*"; else "$@"; fi; }

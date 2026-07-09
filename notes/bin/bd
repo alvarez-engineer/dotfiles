@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bd — brain dump. Opens a new timestamped dump in $NOTES_DIR/inbox, or appends
+# a line from stdin to the day's quick-capture dump.
+#
+# Naming: <YYYY-MM-DD>T<HHMM>-<slug>.md, built with `date +%Y-%m-%dT%H%M` rather
+# than `date -Iseconds`, which BSD date on macOS does not support.
+
+NOTES_DIR="${NOTES_DIR:-$HOME/notes}"
+
+usage() {
+  cat <<'EOF'
+Usage: bd [OPTIONS] [TITLE]
+       bd -
+
+Creates a new brain dump in $NOTES_DIR/inbox and opens it in $EDITOR. With no
+TITLE the dump is named "dump". Reading "-" instead appends stdin to the day's
+quick-capture dump and opens nothing.
+
+Options:
+  --dry-run    print the path that would be created, change nothing
+  -h, --help   show this help
+
+Environment:
+  NOTES_DIR    notes root (default: ~/notes)
+  EDITOR       editor to open the dump with (default: vi)
+
+Examples:
+  bd "hiring loop"          # inbox/2026-07-08T1432-hiring-loop.md, opens $EDITOR
+  bd                        # inbox/2026-07-08T1432-dump.md
+  echo "? why is CI slow" | bd -    # appends to inbox/2026-07-08-quick.md
+
+Once a dump is finished, `bdsplit` routes its marked lines into the standing
+lists. See `bdsplit --help` for the marker grammar.
+EOF
+}
+
+dry_run="false"
+args=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) dry_run="true"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    -)         args+=("-"); shift ;;
+    -*)        echo "bd: unknown option: $1" >&2; usage >&2; exit 2 ;;
+    *)         args+=("$1"); shift ;;
+  esac
+done
+
+run() {
+  if [[ "$dry_run" == "true" ]]; then
+    printf 'DRY RUN: %s\n' "$*"
+  else
+    "$@"
+  fi
+}
+
+inbox="$NOTES_DIR/inbox"
+[[ -d "$inbox" ]] || { echo "bd: no inbox: $inbox (run: install.sh notes)" >&2; exit 1; }
+
+# The dump template ships with the notes module. Resolve it relative to this
+# script's real path so it is found through the ~/.local/bin symlink too. Under
+# --copy installs the symlink is a real file and this still resolves correctly.
+self="${BASH_SOURCE[0]}"
+while [[ -L "$self" ]]; do
+  target="$(readlink -- "$self")"
+  case "$target" in
+    /*) self="$target" ;;
+    *)  self="$(cd -- "$(dirname -- "$self")" && pwd)/$target" ;;
+  esac
+done
+skel="$(cd -- "$(dirname -- "$self")/../skel" 2>/dev/null && pwd || true)"
+
+# --- stdin append mode -------------------------------------------------------
+if [[ "${args[0]:-}" == "-" ]]; then
+  day="$(date +%Y-%m-%d)"
+  quick="$inbox/$day-quick.md"
+  if [[ ! -e "$quick" ]]; then
+    if [[ "$dry_run" == "true" ]]; then
+      printf 'DRY RUN: create %s\n' "$quick"
+    else
+      printf -- '---\ncreated: %s\ntitle: quick capture\n---\n\n' \
+        "$(date +%Y-%m-%dT%H:%M)" >"$quick"
+    fi
+  fi
+  if [[ "$dry_run" == "true" ]]; then
+    printf 'DRY RUN: append stdin to %s\n' "$quick"
+    cat >/dev/null
+  else
+    cat >>"$quick"
+    echo "$quick"
+  fi
+  exit 0
+fi
+
+# --- new dump ----------------------------------------------------------------
+title="${args[*]:-}"
+[[ -n "$title" ]] || title="dump"
+
+# Slug: lowercase, non-alphanumerics collapsed to a single dash, trimmed, <=40.
+slug="$(printf '%s' "$title" \
+  | tr '[:upper:]' '[:lower:]' \
+  | sed -e 's/[^a-z0-9]\{1,\}/-/g' -e 's/^-//' -e 's/-$//' \
+  | cut -c1-40 \
+  | sed -e 's/-$//')"
+[[ -n "$slug" ]] || slug="dump"
+
+stamp="$(date +%Y-%m-%dT%H%M)"
+dest="$inbox/$stamp-$slug.md"
+
+# Collision: two dumps in the same minute with the same title.
+n=2
+while [[ -e "$dest" ]]; do
+  dest="$inbox/$stamp-$slug-$n.md"
+  n=$((n + 1))
+done
+
+if [[ "$dry_run" == "true" ]]; then
+  printf 'DRY RUN: create %s\n' "$dest"
+  exit 0
+fi
+
+if [[ -n "$skel" && -r "$skel/dump.md" ]]; then
+  template="$(cat "$skel/dump.md")"
+  template="${template//\{\{CREATED\}\}/$(date +%Y-%m-%dT%H:%M)}"
+  template="${template//\{\{TITLE\}\}/$title}"
+  printf '%s\n' "$template" >"$dest"
+else
+  printf -- '---\ncreated: %s\ntitle: %s\n---\n\n' \
+    "$(date +%Y-%m-%dT%H:%M)" "$title" >"$dest"
+fi
+
+exec "${EDITOR:-vi}" "$dest"

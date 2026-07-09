@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bdsplit — route marked lines out of brain dumps into the standing lists.
+#
+# Markers (line start, at most 3 leading spaces):
+#   - [ ] text   ->  todo.md       (appended verbatim)
+#   ? text       ->  questions.md  (appended as "- text")
+#   ! text       ->  remember.md   (appended as "- text")
+#
+# Lines inside ``` / ~~~ fences and inside leading YAML frontmatter are ignored,
+# as are already-checked "- [x]" items. Everything else stays in the dump.
+#
+# A routed dump moves to archive/<YYYY-MM>/, which is what makes re-running safe:
+# it is no longer in inbox/, so it cannot be routed twice. Dumps with no markers
+# are left in inbox/ untouched — routing is the "I'm finished" signal.
+
+NOTES_DIR="${NOTES_DIR:-$HOME/notes}"
+
+usage() {
+  cat <<'EOF'
+Usage: bdsplit [OPTIONS] [FILE ...]
+
+Routes marked lines out of brain dumps into todo.md, questions.md and
+remember.md, then archives each dump it routed. With no FILE, processes every
+*.md in $NOTES_DIR/inbox.
+
+Options:
+  --dry-run    print what would be routed and moved, change nothing
+  --commit     git commit the result in $NOTES_DIR
+  --push       implies --commit, then git push
+  --keep       route but leave the dump in inbox/ (backlinks point at inbox/)
+  -h, --help   show this help
+
+Environment:
+  NOTES_DIR    notes root (default: ~/notes)
+
+Markers, with at most 3 leading spaces:
+  - [ ] text   -> todo.md        ("- [x]" is skipped)
+  ? text       -> questions.md
+  ! text       -> remember.md
+EOF
+}
+
+dry_run="false"
+do_commit="false"
+do_push="false"
+keep="false"
+files=()
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) dry_run="true"; shift ;;
+    --commit)  do_commit="true"; shift ;;
+    --push)    do_push="true"; do_commit="true"; shift ;;
+    --keep)    keep="true"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    -*)        echo "bdsplit: unknown option: $1" >&2; usage >&2; exit 2 ;;
+    *)         files+=("$1"); shift ;;
+  esac
+done
+
+run() {
+  if [[ "$dry_run" == "true" ]]; then
+    printf 'DRY RUN: %s\n' "$*"
+  else
+    "$@"
+  fi
+}
+
+[[ -d "$NOTES_DIR" ]] || { echo "bdsplit: no notes dir: $NOTES_DIR" >&2; exit 1; }
+
+inbox="$NOTES_DIR/inbox"
+
+if [[ ${#files[@]} -eq 0 ]]; then
+  [[ -d "$inbox" ]] || { echo "bdsplit: no inbox: $inbox" >&2; exit 1; }
+  # Nullglob so an empty inbox yields an empty array rather than a literal glob.
+  shopt -s nullglob
+  files=("$inbox"/*.md)
+  shopt -u nullglob
+fi
+
+if [[ ${#files[@]} -eq 0 ]]; then
+  echo "nothing to route (inbox is empty)"
+  exit 0
+fi
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+# extract FILE — emit "<dest>\t<formatted line>" for each marked line.
+extract() {
+  awk '
+    function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+    BEGIN { in_fence = 0; in_fm = 0 }
+
+    # Leading YAML frontmatter: only when --- is the very first line.
+    NR == 1 && /^---[ \t]*$/ { in_fm = 1; next }
+    in_fm && /^---[ \t]*$/   { in_fm = 0; next }
+    in_fm                    { next }
+
+    {
+      # Position of the first non-space character; 0 when the line is all spaces.
+      # A leading tab lands here as indent 0 with a tab in rest, which then fails
+      # every marker test below — tabs are not a marker indent.
+      p = match($0, /[^ ]/)
+      if (p == 0) next
+      indent = p - 1
+      rest = substr($0, p)
+    }
+
+    # Fence toggles. Checked before the indent cutoff so a fence opened at any
+    # indent still closes correctly.
+    rest ~ /^```/ || rest ~ /^~~~/ { in_fence = !in_fence; next }
+    in_fence { next }
+
+    # Markdown treats 4+ spaces as an indented code block.
+    indent > 3 { next }
+
+    rest ~ /^- \[[xX]\][ \t]/ { next }
+    rest ~ /^- \[ \][ \t]/    { print "todo\t" rest; next }
+    rest ~ /^\?[ \t]/         { print "questions\t- " trim(substr(rest, 2)); next }
+    rest ~ /^![ \t]/          { print "remember\t- " trim(substr(rest, 2)); next }
+  ' "$1"
+}
+
+# ensure_list_gap FILE — markdown only renders a list as a list when a blank line
+# separates it from a preceding paragraph. Destinations start with prose, so the
+# first routed entry needs a gap; later ones are already inside the list.
+ensure_list_gap() {
+  local f="$1" last
+  [[ -s "$f" ]] || return 0
+  # A trailing newline first, or the append would join the last line.
+  [[ -z "$(tail -c 1 -- "$f")" ]] || printf '\n' >>"$f"
+  last="$(tail -n 1 -- "$f")"
+  [[ -n "$last" ]] || return 0
+  # Already inside a list: "- item" or an indented continuation/backlink.
+  [[ "$last" =~ ^(-[[:space:]]|[[:space:]]) ]] && return 0
+  printf '\n' >>"$f"
+}
+
+routed_total=0
+routed_files=0
+skipped=0
+
+for f in "${files[@]}"; do
+  if [[ ! -f "$f" ]]; then
+    echo "bdsplit: not a file, skipping: $f" >&2
+    continue
+  fi
+
+  base="$(basename -- "$f")"
+
+  # Route first, into a temp file. Only once that succeeds do we touch the
+  # destinations or move the source, so a failure leaves the dump in inbox/.
+  hits="$tmp/hits"
+  extract "$f" >"$hits"
+
+  count="$(wc -l <"$hits" | tr -d ' ')"
+  if [[ "$count" -eq 0 ]]; then
+    echo "skip: $base (no markers)"
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  # Archive under the dump's own month, taken from its filename, not today's
+  # date — routing an old dump should file it where it belongs.
+  if [[ "$base" =~ ^([0-9]{4}-[0-9]{2})-[0-9]{2} ]]; then
+    month="${BASH_REMATCH[1]}"
+  else
+    month="$(date +%Y-%m)"
+  fi
+
+  if [[ "$keep" == "true" ]]; then
+    backlink="inbox/$base"
+  else
+    backlink="archive/$month/$base"
+  fi
+
+  if [[ "$dry_run" == "true" ]]; then
+    printf 'route: %s (%s item(s))\n' "$base" "$count"
+    while IFS=$'\t' read -r dest line; do
+      printf '  -> %-13s %s\n' "$dest.md" "$line"
+    done <"$hits"
+  else
+    while IFS=$'\t' read -r dest line; do
+      ensure_list_gap "$NOTES_DIR/$dest.md"
+      printf '%s\n      <!-- %s -->\n' "$line" "$backlink" >>"$NOTES_DIR/$dest.md"
+    done <"$hits"
+    printf 'route: %s (%s item(s))\n' "$base" "$count"
+  fi
+
+  if [[ "$keep" != "true" ]]; then
+    run mkdir -p "$NOTES_DIR/archive/$month"
+    run mv -- "$f" "$NOTES_DIR/archive/$month/$base"
+  fi
+
+  routed_total=$((routed_total + count))
+  routed_files=$((routed_files + 1))
+done
+
+if [[ "$routed_files" -eq 0 ]]; then
+  if [[ "$skipped" -gt 0 ]]; then
+    echo "nothing to route ($skipped dump(s) had no markers)"
+  else
+    echo "nothing to route"
+  fi
+  exit 0
+fi
+
+printf 'routed %d item(s) from %d dump(s)\n' "$routed_total" "$routed_files"
+
+if [[ "$do_commit" == "true" ]]; then
+  if ! git -C "$NOTES_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+    echo "bdsplit: --commit: $NOTES_DIR is not a git repo" >&2
+    exit 1
+  fi
+  msg="notes: route $routed_total item(s) from $routed_files dump(s)"
+  run git -C "$NOTES_DIR" add -A
+  run git -C "$NOTES_DIR" commit -q -m "$msg"
+  # git push is host-agnostic: it reads origin and does the right thing whether
+  # that is GitHub, Bitbucket, or a bare repo on a NAS. No special-casing here.
+  if [[ "$do_push" == "true" ]]; then
+    run git -C "$NOTES_DIR" push
+  fi
+fi

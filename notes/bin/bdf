@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bdf — fuzzy-find a note by filename and open it.
+
+NOTES_DIR="${NOTES_DIR:-$HOME/notes}"
+
+usage() {
+  cat <<'EOF'
+Usage: bdf [QUERY]
+
+Fuzzy-finds a note under $NOTES_DIR by filename and opens it in $EDITOR.
+QUERY, if given, seeds the fzf prompt. Needs fzf; previews with bat when present.
+
+Options:
+  --dry-run    print the file that would be opened, do not open it
+  -h, --help   show this help
+EOF
+}
+
+dry_run="false"
+query=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) dry_run="true"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    -*)        echo "bdf: unknown option: $1" >&2; usage >&2; exit 2 ;;
+    *)         query="$1"; shift ;;
+  esac
+done
+
+command -v fzf >/dev/null 2>&1 || { echo "bdf: fzf not installed" >&2; exit 1; }
+[[ -d "$NOTES_DIR" ]] || { echo "bdf: no notes dir: $NOTES_DIR" >&2; exit 1; }
+
+# fzf runs the preview in its own cwd, which the subshell below sets to
+# $NOTES_DIR, so {} stays relative — no interpolating a path that may contain
+# spaces into a string fzf will re-split. fzf quotes the {} substitution itself.
+if command -v bat >/dev/null 2>&1; then
+  preview='bat --style=plain --color=always --line-range=:60 {}'
+elif command -v batcat >/dev/null 2>&1; then
+  preview='batcat --style=plain --color=always --line-range=:60 {}'
+else
+  preview='head -60 {}'
+fi
+
+# Paths are printed relative to NOTES_DIR so the picker stays readable.
+pick="$(
+  cd -- "$NOTES_DIR" && find . -name '*.md' -type f \
+    | sed 's|^\./||' \
+    | sort \
+    | fzf --prompt='note> ' --query="$query" --select-1 --exit-0 \
+          --preview="$preview" --preview-window='right,60%'
+)" || exit 0
+
+[[ -n "$pick" ]] || exit 0
+
+if [[ "$dry_run" == "true" ]]; then
+  printf 'DRY RUN: %s %s\n' "${EDITOR:-vi}" "$NOTES_DIR/$pick"
+  exit 0
+fi
+
+exec "${EDITOR:-vi}" "$NOTES_DIR/$pick"

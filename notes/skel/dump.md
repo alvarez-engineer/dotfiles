@@ -1,0 +1,5 @@
+---
+created: {{CREATED}}
+title: {{TITLE}}
+---
+
