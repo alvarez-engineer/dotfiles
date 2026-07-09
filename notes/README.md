@@ -83,4 +83,4 @@ off, reorder them, delete them — it will not fight you.
 The router is a fixed grammar matched with awk. It does not infer what a line
 means. That is deliberate: it keeps this module inside the "config and thin shell
 glue" budget the rest of the repo holds to. If it ever needs to get smart, it
-should graduate to its own repo and be shimmed the way `agent-sandbox` is.
+should graduate to its own repo rather than grow here.

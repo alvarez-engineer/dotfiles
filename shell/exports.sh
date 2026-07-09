@@ -56,14 +56,5 @@ export NOTES_DIR="${NOTES_DIR:-$HOME/notes}"
 # opencode CLI installs to ~/.opencode/bin; add it to PATH when present.
 [ -d "$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
 
-# agent-sandbox (sandboxed coding-agent runner) lives in its own repo; this repo
-# only shims it, and every line here no-ops when the checkout is absent.
-#
-# To point at a different checkout, export AGENT_SANDBOX_HOME *before* the rc
-# files run — ~/.profile (bash) or ~/.zshenv (zsh). Setting it in ~/.bashrc.local
-# is too late: that file is sourced last, after PATH and completions are built.
-export AGENT_SANDBOX_HOME="${AGENT_SANDBOX_HOME:-$HOME/projects/agent-sandbox}"
-[ -d "$AGENT_SANDBOX_HOME/bin" ] && export PATH="$AGENT_SANDBOX_HOME/bin:$PATH"
-
 # Less history / colored GCC diagnostics.
 export GCC_COLORS="error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01"

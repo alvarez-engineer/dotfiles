@@ -43,6 +43,33 @@ binary exists. After adding your git identity to `~/.gitconfig.local`, launch
 `nvim` once so lazy.nvim installs plugins, and run `opencode auth login` before
 first using opencode.
 
+## Just want the note-taking?
+
+The `notes` module stands alone. It touches nothing else: no shell config, no
+symlinks into `~/.config`, and no other module has to be installed.
+
+```bash
+git clone <your-repo-url> dotfiles && cd dotfiles
+./install.sh notes           # symlinks bd/bdsplit/bdf/bdg into ~/.local/bin
+                             # and seeds ~/notes (never overwrites existing files)
+```
+
+Make sure `~/.local/bin` is on your `PATH`, then:
+
+```bash
+bd "hiring loop"             # new dump in ~/notes/inbox, opens $EDITOR
+                             # write freely; mark the lines that should escape:
+                             #   - [ ] a todo      ? a question      ! remember this
+bdsplit --dry-run            # show what would be routed, change nothing
+bdsplit                      # file each marked line into todo/questions/remember.md,
+                             # then archive the dump under ~/notes/archive/YYYY-MM/
+```
+
+Your notes live in `$NOTES_DIR` (default `~/notes`), **outside this repo** —
+give that directory its own git repo if you want history. `bd` and `bdsplit` are
+plain bash and need nothing installed; `fzf` (and `ripgrep`) unlock the `bdf` and
+`bdg` searchers. Full grammar and rationale: [notes/README.md](notes/README.md).
+
 ## Everyday commands
 
 ```bash
