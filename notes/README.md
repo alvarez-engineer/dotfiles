@@ -93,10 +93,18 @@ export VISUAL="$EDITOR"
 ```
 
 `EDITOR` is split on whitespace, so `"code -w"` works but an editor path
-containing spaces does not — put a wrapper script on `PATH` for that. `cursor -w`
-is fine on Linux, but Cursor's `--wait` crashes on macOS with `Unable to find
-helper app`; use `code -w` there. (`cursor` is the GUI launcher — `cursor-agent`
-is a different binary and is not an editor.)
+containing spaces does not — put a wrapper script on `PATH` for that. This is the
+same trade git makes. `cursor -w` is fine on Linux, but Cursor's `--wait` crashes
+on macOS with `Unable to find helper app`; use `code -w` there. (`cursor` is the
+GUI launcher — `cursor-agent` is a different binary and is not an editor.)
+
+`bdg` opens the file *at the matching line*, and that syntax is not portable, so
+it dispatches on the editor's name: `--goto file:N` for the VS Code family
+(`code`, `code-insiders`, `codium`, `cursor`, `windsurf`), `file:N` for `subl`
+and `zed`, and `+N file` for everything else. An unrecognized editor gets the
+`+N` form, which is right for vi/vim/nvim/emacs/nano — and for `vi`, the fallback
+when `EDITOR` is unset. If yours needs something different, `bdg --dry-run` shows
+the exact command line without running it.
 
 **Obsidian cannot be an `$EDITOR`.** It is a vault browser with no wait flag, and
 its `obsidian://` URI only opens files already inside a registered vault. Point

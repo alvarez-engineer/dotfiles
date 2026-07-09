@@ -134,4 +134,11 @@ else
     "$(date +%Y-%m-%dT%H:%M)" "$title" >"$dest"
 fi
 
-exec "${EDITOR:-vi}" "$dest"
+# EDITOR is a command line, not a command name: GUI editors need a wait flag
+# ("code -w"). Quoting it would look up a binary literally named "code -w", so
+# it is deliberately unquoted and word-split -- the same thing git does by
+# running it through `sh -c`. The filename stays quoted, so spaces in it are
+# safe; a space in the *editor's own path* is not, here or in git. Use a
+# wrapper script on PATH for that.
+# shellcheck disable=SC2086
+exec ${EDITOR:-vi} "$dest"

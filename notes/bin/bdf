@@ -59,4 +59,6 @@ if [[ "$dry_run" == "true" ]]; then
   exit 0
 fi
 
-exec "${EDITOR:-vi}" "$NOTES_DIR/$pick"
+# Unquoted on purpose: EDITOR may carry flags ("code -w"). See the note in `bd`.
+# shellcheck disable=SC2086
+exec ${EDITOR:-vi} "$NOTES_DIR/$pick"
