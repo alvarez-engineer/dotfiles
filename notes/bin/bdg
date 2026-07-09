@@ -54,10 +54,30 @@ file="${pick%%:*}"
 rest="${pick#*:}"
 line="${rest%%:*}"
 
+target="$NOTES_DIR/$file"
+
+# EDITOR is a command line, not a command name -- it may carry a flag such as
+# `code -w`. Split it; see the longer note in `bd`.
+# shellcheck disable=SC2206
+editor_cmd=(${EDITOR:-vi})
+
+# Jumping to a line has no portable syntax. `+N file` is vi/vim/nvim/emacs/nano;
+# the VS Code family wants `--goto file:N`; sublime and zed take `file:N`. `+N`
+# is NOT harmless to the others -- VS Code opens a new file literally named
+# "+N". Anything unrecognized gets the vi form, which is the safe default here
+# because $EDITOR falls back to vi.
+case "${editor_cmd[0]##*/}" in
+  code|code-insiders|codium|cursor|windsurf)
+    editor_cmd+=(--goto "$target:$line") ;;
+  subl|sublime_text|zed)
+    editor_cmd+=("$target:$line") ;;
+  *)
+    editor_cmd+=("+$line" "$target") ;;
+esac
+
 if [[ "$dry_run" == "true" ]]; then
-  printf 'DRY RUN: %s +%s %s\n' "${EDITOR:-vi}" "$line" "$NOTES_DIR/$file"
+  printf 'DRY RUN: %s\n' "${editor_cmd[*]}"
   exit 0
 fi
 
-# +N works for vi/vim/nvim; harmless for editors that ignore it.
-exec "${EDITOR:-vi}" "+$line" "$NOTES_DIR/$file"
+exec "${editor_cmd[@]}"
