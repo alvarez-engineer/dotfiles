@@ -33,8 +33,9 @@ zstyle ':completion:*' menu select
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 
 # agent-sandbox completion (when the repo is checked out)
-[ -r "$HOME/projects/agent-sandbox/completions/agent-sandbox.zsh" ] \
-  && source "$HOME/projects/agent-sandbox/completions/agent-sandbox.zsh"
+# $AGENT_SANDBOX_HOME is set by exports.sh, sourced above.
+[ -r "${AGENT_SANDBOX_HOME:-}/completions/agent-sandbox.zsh" ] \
+  && source "$AGENT_SANDBOX_HOME/completions/agent-sandbox.zsh"
 
 # --- fzf, if installed ---
 if command -v fzf >/dev/null 2>&1; then
