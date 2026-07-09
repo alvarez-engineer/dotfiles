@@ -1,0 +1,12 @@
+version: 2
+
+# This repo has no application dependencies — the only thing that can rot is the
+# set of actions pinned in .github/workflows/. Dependabot alerts and automated
+# security fixes are enabled on the repo itself; this file adds version updates.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
