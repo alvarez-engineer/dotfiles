@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Muted coding prompt for bash.
 # Source from ~/.bashrc:
 #   source ~/.config/ghostty/shell/bash_prompt.sh

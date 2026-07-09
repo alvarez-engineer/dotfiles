@@ -10,9 +10,20 @@ timestamp="$(date +%Y%m%d-%H%M%S)"
 archive="$backup_dir/dotfiles-backup-$timestamp.tar.gz"
 
 # Managed paths, relative to $HOME so they restore cleanly with `tar -C ~`.
+#
+# The untracked *.local files are here because they are the only irreplaceable
+# things in the set — everything else can be re-linked from the repo.
+#
+# ~/.local/bin/{bd,bdsplit,bdf,bdg} is deliberately absent: those are symlinks
+# into the repo, and `tar -h` would archive their contents, so restoring would
+# drop real files on top of the links and silently freeze them at this version.
+# $NOTES_DIR is absent for the same reason it is not in the repo — it is your
+# data, and it should have its own git history.
 rel_targets=(
   ".bashrc"
+  ".bashrc.local"
   ".zshrc"
+  ".zshrc.local"
   ".gitconfig"
   ".gitconfig.local"
   ".config/starship.toml"

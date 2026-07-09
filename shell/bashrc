@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Managed ~/.bashrc — symlinked from the dotfiles repo (shell module).
 # Edit the repo file, not the symlink. Machine-local tweaks: ~/.bashrc.local
 
@@ -59,10 +60,6 @@ if command -v fzf >/dev/null 2>&1; then
     [ -f /usr/share/fzf/shell/completion.bash ] && . /usr/share/fzf/shell/completion.bash
   fi
 fi
-
-# --- agent-sandbox completion (when the repo is checked out) ---
-[ -r "$HOME/projects/agent-sandbox/completions/agent-sandbox.bash" ] \
-  && . "$HOME/projects/agent-sandbox/completions/agent-sandbox.bash"
 
 # --- Prompt: Starship if available, otherwise the bundled muted prompt ---
 if command -v starship >/dev/null 2>&1; then

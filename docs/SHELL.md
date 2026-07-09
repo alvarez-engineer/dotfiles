@@ -18,13 +18,35 @@ finally your machine-local override file.
 
 - `shell/exports.sh` — `EDITOR`/`VISUAL` (nvim→vim→vi), `PAGER`/`LESS`, bat as
   the man pager, `RIPGREP_CONFIG_PATH`, `FZF_DEFAULT_OPTS` (muted-ink colors),
-  `STARSHIP_CONFIG`.
-- `shell/aliases.sh` — `ls`/`ll`/`la` (eza with `ls` fallback), `cat`→bat,
+  `STARSHIP_CONFIG`, `NOTES_DIR` (the `notes` module).
+- `shell/aliases.sh` — `ls`/`ll`/`la` (eza when present, otherwise `ls`), `cat`→bat,
   grep colors, `..`/`...` navigation, git shortcuts, `reload`, `serve`.
 - `shell/functions.sh` — `mkcd`, `up [N]`, `extract`, `fkill` (fzf), `gcd`.
 
 Aliases and functions are written in POSIX-compatible form so bash and zsh
 behave the same.
+
+### The `ls` fallback, and why it is not written inside the alias
+
+When `eza` is absent, `aliases.sh` probes `ls` **once, at source time** and bakes
+the right flags in — GNU coreutils takes `--color=auto --group-directories-first`,
+BSD/macOS `ls` takes neither and wants `-G`.
+
+Putting the fallback *inside* the alias body is the obvious-looking approach and
+it is broken, because an alias is textual substitution. Given
+
+```sh
+alias ls='ls --color=auto --group-directories-first 2>/dev/null || ls --color=auto'
+```
+
+the command `ls somedir` expands to
+
+```sh
+ls --color=auto --group-directories-first 2>/dev/null || ls --color=auto somedir
+```
+
+On GNU the first branch succeeds — listing the **current** directory — and
+`somedir` is never shown. On macOS both branches fail on the unknown flag.
 
 ## Prompt
 

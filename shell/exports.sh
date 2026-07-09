@@ -48,12 +48,13 @@ fi
 # Starship config path (symlinked by the shell module).
 export STARSHIP_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml"
 
+# Notes root for the notes module (bd/bdsplit/bdf/bdg and the nvim ftplugin).
+# The scripts default to the same path on their own, so this is for nvim and for
+# overriding interactively; notes themselves never live in the dotfiles repo.
+export NOTES_DIR="${NOTES_DIR:-$HOME/notes}"
+
 # opencode CLI installs to ~/.opencode/bin; add it to PATH when present.
 [ -d "$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
-
-# agent-sandbox (sandboxed coding-agent runner) lives in its own repo; add its
-# bin/ to PATH when checked out.
-[ -d "$HOME/projects/agent-sandbox/bin" ] && export PATH="$HOME/projects/agent-sandbox/bin:$PATH"
 
 # Less history / colored GCC diagnostics.
 export GCC_COLORS="error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01"

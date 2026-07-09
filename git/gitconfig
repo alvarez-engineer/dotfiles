@@ -1,9 +1,6 @@
 # Managed ~/.gitconfig — symlinked from the dotfiles repo (git module).
-# Identity and secrets live in ~/.gitconfig.local (untracked), included below.
-
-[include]
-	# Machine-local: user.name / user.email / signing keys / work overrides.
-	path = ~/.gitconfig.local
+# Identity and secrets live in ~/.gitconfig.local (untracked), included at the
+# BOTTOM of this file — see the note there before moving it.
 
 [user]
 	# Intentionally empty here — set name/email in ~/.gitconfig.local.
@@ -64,13 +61,15 @@
 [commit]
 	verbose = true
 
+# Resolve gh through PATH, not an absolute path: Homebrew puts it in
+# /opt/homebrew/bin (Apple Silicon) or /usr/local/bin (Intel), never /usr/bin.
 [credential "https://github.com"]
 	helper =
-	helper = !/usr/bin/gh auth git-credential
+	helper = !gh auth git-credential
 
 [credential "https://gist.github.com"]
 	helper =
-	helper = !/usr/bin/gh auth git-credential
+	helper = !gh auth git-credential
 
 [alias]
 	st = status --short --branch
@@ -86,3 +85,13 @@
 	amend = commit --amend --no-edit
 	undo = reset --soft HEAD~1
 	aliases = config --get-regexp ^alias\\.
+
+# Machine-local: user.name / user.email / signing keys / work overrides.
+#
+# This include MUST stay last. Git applies an include where it appears, and for
+# a single-valued key the last value wins — so an include at the top of the file
+# is read first and every setting above would silently beat it. Last means
+# ~/.gitconfig.local actually overrides, which is the contract the other modules
+# keep too (~/.bashrc.local, local.ghostty).
+[include]
+	path = ~/.gitconfig.local

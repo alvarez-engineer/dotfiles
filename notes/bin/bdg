@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# bdg — grep note contents, pick a hit, open it at that line.
+
+NOTES_DIR="${NOTES_DIR:-$HOME/notes}"
+
+usage() {
+  cat <<'EOF'
+Usage: bdg [QUERY]
+
+Searches note contents under $NOTES_DIR with ripgrep, fuzzy-picks a hit, and
+opens it in $EDITOR at that line. Needs rg and fzf.
+
+Options:
+  --dry-run    print the file and line that would be opened, do not open
+  -h, --help   show this help
+
+Examples:
+  bdg                 # browse every line, filter interactively
+  bdg staging         # seed the filter with "staging"
+EOF
+}
+
+dry_run="false"
+query=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run) dry_run="true"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    -*)        echo "bdg: unknown option: $1" >&2; usage >&2; exit 2 ;;
+    *)         query="$1"; shift ;;
+  esac
+done
+
+command -v rg  >/dev/null 2>&1 || { echo "bdg: ripgrep (rg) not installed" >&2; exit 1; }
+command -v fzf >/dev/null 2>&1 || { echo "bdg: fzf not installed" >&2; exit 1; }
+[[ -d "$NOTES_DIR" ]] || { echo "bdg: no notes dir: $NOTES_DIR" >&2; exit 1; }
+
+# Match every line, let fzf do the filtering. --no-config so a user's
+# ripgreprc (the cli module sets RIPGREP_CONFIG_PATH) cannot alter the
+# file:line:text shape this parses.
+pick="$(
+  cd -- "$NOTES_DIR" && rg --no-config --line-number --no-heading --color=never \
+      --glob '*.md' '' . \
+    | sed 's|^\./||' \
+    | fzf --prompt='grep> ' --query="$query" --select-1 --exit-0 \
+          --delimiter=':' --with-nth='1,3..'
+)" || exit 0
+
+[[ -n "$pick" ]] || exit 0
+
+file="${pick%%:*}"
+rest="${pick#*:}"
+line="${rest%%:*}"
+
+if [[ "$dry_run" == "true" ]]; then
+  printf 'DRY RUN: %s +%s %s\n' "${EDITOR:-vi}" "$line" "$NOTES_DIR/$file"
+  exit 0
+fi
+
+# +N works for vi/vim/nvim; harmless for editors that ignore it.
+exec "${EDITOR:-vi}" "+$line" "$NOTES_DIR/$file"

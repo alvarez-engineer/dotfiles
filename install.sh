@@ -11,7 +11,7 @@ Usage: ./install.sh [--copy] [--dry-run] [MODULE ...]
 Installs dotfiles by symlinking each module's config into place. Existing files
 are backed up with a timestamp before being replaced.
 
-Modules (default: all): ghostty shell git tmux nvim cli opencode
+Modules (default: all): ghostty shell git tmux nvim cli opencode notes
 
 Options:
   --bootstrap  install the tool binaries first (scripts/bootstrap.sh; needs sudo)
@@ -28,7 +28,7 @@ Examples:
 EOF
 }
 
-ALL_MODULES=(ghostty shell git tmux nvim cli opencode)
+ALL_MODULES=(ghostty shell git tmux nvim cli opencode notes)
 
 mode="symlink"
 dry_run="false"

@@ -30,16 +30,21 @@ That keeps the tracked config safe to publish.
 
 ```json
 {
-  "model": "anthropic/claude-sonnet-4-6",
+  "model": "anthropic/claude-sonnet-5",
   "small_model": "anthropic/claude-haiku-4-5"
 }
 ```
 
 Sonnet is a good default for a coding agent; Haiku handles cheap background
-tasks (titles, summaries). Prefer Opus? Change `model` to
-`anthropic/claude-opus-4-6`, or switch interactively in the TUI with `/models`
-(model ids resolve against the models.dev registry). To use a different
-provider entirely, set `model` to `provider/model` and authenticate for it.
+tasks (titles, summaries). Prefer Opus? Change `model` to the current Opus id
+(`anthropic/claude-opus-4-8` at time of writing).
+
+**Model ids go stale.** They resolve against the [models.dev](https://models.dev)
+registry, not against anything in this repo, so treat the values above as a
+snapshot rather than a guarantee. `/models` in the TUI lists what your account
+can actually reach today, and is the authority when a pinned id stops resolving.
+To use a different provider entirely, set `model` to `provider/model` and
+authenticate for it.
 
 `permission` defaults to asking before edits and shell commands
 (`"edit": "ask"`, `"bash": "ask"`) — loosen per project via an `opencode.json`
