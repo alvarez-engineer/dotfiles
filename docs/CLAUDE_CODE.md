@@ -79,10 +79,11 @@ It degrades to `$PWD` when the JSON is unparseable, falls back to a dir/branch/m
 line when `python3` is unavailable, and never exits non-zero — a status line must
 not be able to break the prompt.
 
-**Glyphs are ASCII by default.** A pipe cannot detect the rendering font, and the
-bundled JetBrains Mono carries no Nerd Font icons (they would render as tofu boxes),
-so powerline glyphs are opt-in — `export DOTFILES_STATUSLINE_GLYPHS=nerd` swaps the
-`·`/`on` separators for powerline glyphs; anything else stays ASCII.
+**Glyphs are ASCII by default.** A pipe cannot detect the rendering font, so
+powerline glyphs are opt-in — `export DOTFILES_STATUSLINE_GLYPHS=nerd` swaps the
+`·`/`on` separators for powerline glyphs; anything else stays ASCII. `bootstrap.sh`
+installs JetBrainsMono Nerd Font Mono so the glyphs resolve in VS Code's terminal
+(Ghostty renders them regardless); see [Fonts](FONTS.md).
 
 `statusLine.command` gets an **absolute** path baked in at seed time. A leading `~`
 is not reliably expanded there, and the seeded file is a copy, so rewriting it is

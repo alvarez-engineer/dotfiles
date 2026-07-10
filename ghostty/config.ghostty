@@ -14,7 +14,12 @@ theme = muted-ink
 window-theme = dark
 
 # Font
-# Ghostty embeds JetBrains Mono, so this is a safe baseline.
+# JetBrainsMono Nerd Font Mono is what bootstrap.sh installs (a superset of
+# JetBrains Mono with the icon glyphs). If it is not installed, Ghostty falls
+# through to the embedded JetBrains Mono below -- and renders Nerd glyphs either
+# way, via its built-in Nerd Font symbol fallback. The repeated line is the
+# fallback; both keep the terminal monospaced.
+font-family = JetBrainsMono Nerd Font Mono
 font-family = JetBrains Mono
 font-size = 14
 
