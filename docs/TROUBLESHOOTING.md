@@ -175,6 +175,14 @@ block). Lines inside ``` fences and in YAML frontmatter are ignored, as are the
 checked `[x]` and `- [x]`. A dump already routed lives in `archive/<YYYY-MM>/` —
 that is what makes re-running safe.
 
+## `bdsplit: not an inbox dump`
+
+Routing archives the file it reads, so `bdsplit` only accepts files in
+`$NOTES_DIR/inbox`. Without that rule `bdsplit todo.md` — or `bdsplit *.md` run
+from the notes root — would route every `- [ ]` line back into `todo.md` and then
+move the list into `archive/`. Point it at a dump, or run it with no arguments to
+take the whole inbox.
+
 ## `make check` passes but something is obviously broken
 
 Each linter is *skipped when its binary is absent*, so a bare machine exits 0

@@ -82,7 +82,7 @@ echo "? why is CI slow" | bd -   # append to today's quick-capture dump
 
 bdsplit --dry-run             # show what would be routed
 bdsplit                       # route every dump in inbox/, archive each one
-bdsplit inbox/2026-07-08T1432-hiring-loop.md   # just this one
+bdsplit inbox/2026-07-08T1432-hiring-loop.md   # just this one (must be in inbox/)
 bdsplit --commit              # ...and commit the result in $NOTES_DIR
 bdsplit --push                # ...and push
 
@@ -159,6 +159,13 @@ leaving it in `inbox/` protects nothing. `bdsplit` archives it and says `empty:`
 **Archiving is what makes re-running safe.** Once a dump leaves `inbox/`, a bare
 `bdsplit` cannot see it again, so nothing is ever double-routed. There is no
 state file and no `routed:` stamp to get out of sync.
+
+The corollary: every file `bdsplit` reads is a file `bdsplit` archives. So a
+named `FILE` must live in `inbox/`, and one that does not is refused outright —
+`bdsplit todo.md` would otherwise route your todos back into `todo.md` and then
+file the list away under `archive/`. For the same reason `--keep` is not a safe
+preview: it skips the archive step, so the dump routes again, and duplicates, on
+the next run. `--dry-run` is the safe preview.
 
 **Destinations are append-only.** `bdsplit` never rewrites `todo.md`. Check items
 off, reorder them, delete them — it will not fight you.
