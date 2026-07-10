@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# dev-shell — the shell VS Code's integrated terminal should have opened.
+#
+# Two problems it solves, in order.
+#
+# 1. A flatpak VS Code runs its integrated terminal *inside the sandbox*, whose
+#    PATH is only /app/bin:/usr/bin. That sandbox has bash, git, and python3 --
+#    and no tmux, no nvim, no ripgrep, no fzf, and no claude. So the default
+#    integrated terminal cannot run any of the tools this repo installs. Hop to
+#    the host first, via whichever spawn helper the runtime provides.
+#
+# 2. Attach (or create) one tmux session per project, named for the directory.
+#    The same session is reachable from Ghostty with `tmux attach -t <name>`, so
+#    the editor's terminal and the standalone terminal are the *same* session:
+#    closing VS Code does not kill the shell, and switching windows costs no
+#    state. That, not the window count, is what makes the setup feel like one
+#    place.
+#
+# Set DOTFILES_DEV_SHELL_NO_TMUX=1 for a plain login shell.
+
+set -euo pipefail
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# /.flatpak-info exists only inside a flatpak sandbox. Re-exec this same script
+# on the host; there the file is absent, so this branch does not recurse.
+#
+# Both helpers preserve the working directory, which the session name depends on.
+# Neither forwards the environment: host-spawn passes *only* $TERM unless told
+# otherwise, so every variable that matters has to be named explicitly. Getting
+# this wrong is silent -- the var is simply empty on the far side.
+if [[ -f /.flatpak-info ]]; then
+  if have host-spawn; then
+    exec host-spawn -env TERM,DOTFILES_DEV_SHELL_NO_TMUX "$0" "$@"
+  elif have flatpak-spawn; then
+    exec flatpak-spawn --host \
+      --env=TERM="${TERM:-xterm-256color}" \
+      --env=DOTFILES_DEV_SHELL_NO_TMUX="${DOTFILES_DEV_SHELL_NO_TMUX:-}" \
+      "$0" "$@"
+  fi
+  printf 'dev-shell: inside a flatpak sandbox with no host-spawn/flatpak-spawn.\n' >&2
+  printf 'dev-shell: falling back to the sandbox shell; tmux and claude are absent here.\n' >&2
+  exec "${SHELL:-/bin/bash}" -l
+fi
+
+if [[ -n "${DOTFILES_DEV_SHELL_NO_TMUX:-}" ]] || ! have tmux; then
+  exec "${SHELL:-/bin/bash}" -l
+fi
+
+# tmux rejects '.' and ':' in session names -- they are its window/pane
+# separators -- and an empty name is an error. Derive one from the directory.
+session="$(basename -- "${PWD:-$HOME}")"
+session="${session//[.:]/_}"
+[[ -n "$session" ]] || session="dev"
+
+# -A: attach if it exists, create otherwise. Idempotent, so every new terminal
+# tab lands in the same session rather than spawning a pile of them.
+exec tmux new-session -A -s "$session"

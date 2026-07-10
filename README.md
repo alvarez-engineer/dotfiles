@@ -18,7 +18,8 @@ all of them or just the ones you want.
 | `nvim`    | Minimal lazy.nvim setup + muted-ink colorscheme | `~/.config/nvim` |
 | `cli`     | bat, ripgrep, fzf (theming + config) | `~/.config/{bat,ripgrep}` |
 | `opencode`| opencode AI coding agent config + muted-ink theme | `~/.config/opencode` |
-| `vscode`  | Minimal settings, muted-ink theme, `code` shim for flatpak installs | `Code/User`, extensions dir, `~/.local/bin/code` |
+| `vscode`  | Minimal settings, muted-ink theme, `code` shim, tmux terminal profile | `Code/User`, extensions dir, `~/.local/bin/{code,dev-shell}` |
+| `claude`  | Claude Code: `dark-ansi` theme, muted-ink status line | `~/.claude` |
 | `notes`   | Plain-text brain dumps + a marker router into standing lists | `~/.local/bin/{bd,bdsplit,bdf,bdg}`, `~/notes` |
 
 ## Quick start
@@ -80,7 +81,7 @@ make bootstrap       # install tool binaries (dnf/apt/brew); -dev adds linters
 make all             # bootstrap + install in one shot
 make install         # ./install.sh (configs only)
 make dry-run         # preview all actions
-make install-nvim    # one module (also: -shell -git -tmux -ghostty -cli -opencode -vscode -notes)
+make install-nvim    # one module (also: -shell -git -tmux -ghostty -cli -opencode -vscode -claude -notes)
 make doctor          # what's linked, what tools are missing
 make backup          # tarball all managed files to ./backups/ before changes
 make validate        # ghostty +validate-config (needs the ghostty CLI)
@@ -119,7 +120,7 @@ Full details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 - [Bootstrap (install the binaries)](docs/BOOTSTRAP.md)
 - [Architecture](docs/ARCHITECTURE.md)
-- Modules: [Shell](docs/SHELL.md) · [Git](docs/GIT.md) · [tmux](docs/TMUX.md) · [Neovim](docs/NVIM.md) · [CLI tools](docs/CLI.md) · [opencode](docs/OPENCODE.md) · [VS Code](docs/VSCODE.md) · [notes](notes/README.md)
+- Modules: [Shell](docs/SHELL.md) · [Git](docs/GIT.md) · [tmux](docs/TMUX.md) · [Neovim](docs/NVIM.md) · [CLI tools](docs/CLI.md) · [opencode](docs/OPENCODE.md) · [VS Code](docs/VSCODE.md) · [Claude Code](docs/CLAUDE_CODE.md) · [notes](notes/README.md)
 - Ghostty: [macOS](docs/MACOS.md) · [Linux](docs/LINUX.md) · [Fonts](docs/FONTS.md) · [Themes](docs/THEMES.md) · [Keybindings](docs/KEYBINDS.md) · [Shell integration](docs/SHELL_INTEGRATION.md) · [Prompt](docs/PROMPT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md) · [Maintenance](docs/MAINTENANCE.md) · [Community cheatsheet](docs/COMMUNITY_CHEATSHEET.md) · [References](docs/REFERENCES.md)
 

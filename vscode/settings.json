@@ -85,5 +85,40 @@
   "terminal.integrated.cursorStyle": "block",
   "terminal.integrated.cursorBlinking": false,
   "terminal.integrated.copyOnSelection": true,
-  "terminal.integrated.smoothScrolling": true
+  "terminal.integrated.smoothScrolling": true,
+
+  // --- One terminal, one tmux session per project -----------------------------
+  // vscode/bin/dev-shell, not $SHELL. A flatpak VS Code runs the integrated
+  // terminal *inside the sandbox*, where PATH is only /app/bin:/usr/bin -- no
+  // tmux, no nvim, no ripgrep, no fzf, no claude. dev-shell hops to the host and
+  // attaches a tmux session named for the project directory, so the terminal in
+  // here and `tmux attach` from Ghostty are the same session. See docs/VSCODE.md.
+  //
+  // ${env:HOME} because a profile `path` may not begin with `~`.
+  "terminal.integrated.profiles.linux": {
+    "dev (tmux)": { "path": "${env:HOME}/.local/bin/dev-shell" }
+  },
+  "terminal.integrated.defaultProfile.linux": "dev (tmux)",
+  "terminal.integrated.profiles.osx": {
+    "dev (tmux)": { "path": "${env:HOME}/.local/bin/dev-shell" }
+  },
+  "terminal.integrated.defaultProfile.osx": "dev (tmux)",
+
+  // tmux owns session lifetime now. VS Code's own restore would fight it,
+  // reattaching a dead pane on top of a live tmux server.
+  "terminal.integrated.enablePersistentSessions": false,
+
+  // Terminals to the right, not the bottom: the editor and Explorer keep the
+  // left, terminals sit beside them full-height. Split the panel to get Claude
+  // Code in one and a shell in the other, both visible at once.
+  "workbench.panel.defaultLocation": "right",
+
+  // Note on tmux and keybindings: VS Code binds ctrl+b to toggleSidebarVisibility
+  // and handles it before the shell sees it, which would eat tmux's stock prefix.
+  // tmux/tmux.conf already rebinds the prefix to ctrl+a and unbinds ctrl+b, and
+  // ctrl+a is not a VS Code terminal binding, so they coexist. If a keybinding is
+  // ever swallowed, "terminal.integrated.sendKeybindingsToShell": true sends every
+  // chord to the shell instead -- at the cost of VS Code's own shortcuts while the
+  // terminal has focus.
+  "terminal.integrated.allowChords": true
 }

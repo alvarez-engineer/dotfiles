@@ -7,6 +7,7 @@ The `vscode` module installs three things:
 | `vscode/settings.json` | the platform's `Code/User/settings.json` | symlink |
 | `vscode/extensions/muted-ink/` | the extensions dir, as `dotfiles.muted-ink-1.0.0` | registered via `.vsix`, then symlinked — [see below](#theme) |
 | `vscode/bin/code` | `~/.local/bin/code` | symlink |
+| `vscode/bin/dev-shell` | `~/.local/bin/dev-shell` | symlink — the integrated terminal's shell |
 
 ```bash
 ./install.sh vscode      # or: make install-vscode
@@ -51,10 +52,64 @@ VS Code install still leaves `code file` and `EDITOR="code -w"` broken.
   empty buffer and silently discard the edit. `git commit` is unaffected — its
   `COMMIT_EDITMSG` sits inside `.git` — which is precisely why the bug hides.
 
+The PATH scan turns out to cover the flatpak sandbox for free. Run from VS Code's
+own integrated terminal, the shim finds `/app/bin/code` — VS Code's real CLI, inside
+the sandbox — and defers to it, so `code file` opens a tab in the window you are
+already in. Run from a host shell, there is no `code`, and it falls back to
+`flatpak run`. That path is single-instance too: `code file` on a running VS Code
+attaches to it rather than starting a second app.
+
 `DOTFILES_CODE_DEBUG=1 code` prints the command it would run and exits.
 
 The shim is a transparent pass-through, so unlike other scripts here it has no
 `usage()` and no `--dry-run`: every argument, `-h` included, belongs to VS Code.
+
+## The integrated terminal runs inside the sandbox
+
+This is the one that bites. A flatpak VS Code runs its integrated terminal **inside
+the flatpak sandbox**, whose `PATH` is only `/app/bin:/usr/bin`. That gives you
+`bash`, `git`, `python3`, `make` — and:
+
+```text
+[ ] tmux    MISSING
+[ ] nvim    MISSING
+[ ] claude  MISSING
+[ ] rg      MISSING
+[ ] fzf     MISSING
+```
+
+None of the tools this repo installs. The default integrated terminal cannot run
+Claude Code at all.
+
+`vscode/bin/dev-shell` is the terminal profile. It:
+
+1. Detects the sandbox by `/.flatpak-info` and re-execs itself on the host through
+   `host-spawn` (or `flatpak-spawn --host`). On the host that file is absent, so it
+   does not recurse.
+2. Attaches — or creates — **one tmux session per project**, named for the working
+   directory, with `.` and `:` replaced (tmux forbids them in session names).
+
+Both spawn helpers preserve the working directory, which the session name depends
+on. **Neither forwards the environment**: `host-spawn` passes only `$TERM` unless
+you name more variables, and getting that wrong fails silently — the variable is
+simply empty on the far side. `dev-shell` names them explicitly.
+
+The payoff is that the terminal inside VS Code and `tmux attach -t <dir>` from
+Ghostty are the *same session*. Closing the editor does not kill the shell, and
+switching windows costs no state.
+
+`DOTFILES_DEV_SHELL_NO_TMUX=1` gives a plain login shell.
+
+### tmux and VS Code keybindings
+
+VS Code binds `ctrl+b` to `toggleSidebarVisibility` and handles it before the shell
+sees it — which would eat tmux's **stock** prefix. `tmux/tmux.conf` already rebinds
+the prefix to `ctrl+a` and unbinds `ctrl+b`, and `ctrl+a` is not a VS Code terminal
+binding, so the two coexist.
+
+If a chord is ever swallowed, `"terminal.integrated.sendKeybindingsToShell": true`
+sends every keystroke to the shell — at the cost of VS Code's own shortcuts while
+the terminal has focus.
 
 ### Using it as `$EDITOR`
 

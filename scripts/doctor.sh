@@ -27,7 +27,7 @@ else
 fi
 
 printf 'Tools:\n'
-for b in ghostty nvim tmux git starship fzf rg bat eza delta zsh opencode code; do
+for b in ghostty nvim tmux git starship fzf rg bat eza delta zsh opencode code claude; do
   if command -v "$b" >/dev/null 2>&1; then
     printf '  [x] %-9s %s\n' "$b" "$(command -v "$b")"
   else
@@ -51,6 +51,8 @@ targets=(
   "$vscode_user/settings.json"
   "$vscode_ext/dotfiles.muted-ink-1.0.0"
   "$HOME/.local/bin/code"
+  "$HOME/.local/bin/dev-shell"
+  "$HOME/.claude/statusline.sh"
   "$HOME/.local/bin/bd"
   "$HOME/.local/bin/bdsplit"
   "$HOME/.local/bin/bdf"

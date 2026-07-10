@@ -67,6 +67,8 @@ targets=(
   "$vscode_user/settings.json"
   "$vscode_ext/dotfiles.muted-ink-1.0.0"
   "$HOME/.local/bin/code"
+  "$HOME/.local/bin/dev-shell"
+  "$HOME/.claude/statusline.sh"
   "$HOME/.local/bin/bd"
   "$HOME/.local/bin/bdsplit"
   "$HOME/.local/bin/bdf"
@@ -107,6 +109,12 @@ if [[ -f "$vscode_ext/extensions.json" ]] &&
   grep -q '"dotfiles.muted-ink"' "$vscode_ext/extensions.json" 2>/dev/null; then
   echo "Note: the Muted Ink theme is still registered with VS Code."
   echo "      Remove it with: code --uninstall-extension dotfiles.muted-ink"
+fi
+
+# ~/.claude/settings.json is seeded, not symlinked, so the loop above never sees
+# it. It holds machine state we did not put there; leave it alone and say so.
+if [[ -f "$HOME/.claude/settings.json" ]]; then
+  echo "Note: ~/.claude/settings.json was seeded, not linked, and is left in place."
 fi
 
 echo "Uninstall complete. Restart your shell to drop shell changes."
