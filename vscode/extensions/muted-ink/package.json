@@ -1,0 +1,23 @@
+{
+  "name": "muted-ink",
+  "displayName": "Muted Ink",
+  "description": "Dark theme with low-glare contrast and restrained blue/green/slate accents. Part of the dotfiles muted-ink palette.",
+  "version": "1.0.0",
+  "publisher": "dotfiles",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Muted Ink",
+        "uiTheme": "vs-dark",
+        "path": "./themes/muted-ink-color-theme.json"
+      }
+    ]
+  }
+}

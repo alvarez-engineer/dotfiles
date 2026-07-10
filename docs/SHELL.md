@@ -55,6 +55,24 @@ export VISUAL="$EDITOR"
 `EDITOR` is split on whitespace when it is run, so `"code -w"` works, but a path
 containing spaces does not. Wrap those in a script on `PATH` instead.
 
+**`code -w` assumes a `code` on `PATH`, and a flatpak VS Code has none.** The
+flatpak exports its launcher as `com.visualstudio.code`, in a directory
+(`/var/lib/flatpak/exports/bin`) that is not on `PATH` by default. The `vscode`
+module installs a `code` shim that papers over this; see [VSCODE.md](VSCODE.md).
+Without that module, spell it out — `EDITOR` is whitespace-split, so a command
+with arguments is fine even though a *path* with spaces is not:
+
+```bash
+export EDITOR="flatpak run --filesystem=/tmp com.visualstudio.code -w"
+```
+
+`--filesystem=/tmp` is not optional. A flatpak gets a **private `/tmp`** even
+though this one is granted `filesystems=host`, so the sandbox cannot read a host
+`/tmp` file. Any tool that hands `$EDITOR` a scratch file there — `crontab -e`,
+`sudoedit` — otherwise opens an empty buffer and drops your edit. `git commit` is
+unaffected, because `COMMIT_EDITMSG` lives inside `.git`, which is what makes
+this failure so easy to miss.
+
 **Cursor.** It is a VS Code fork, so `cursor -w` is the same flag and works on
 Linux. Two known problems, neither ours to fix: on macOS `cursor --wait` has
 crashed with `Unable to find helper app` (an Electron packaging bug, open across

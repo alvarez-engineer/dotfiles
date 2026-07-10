@@ -33,6 +33,18 @@ done
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 xdg="${XDG_CONFIG_HOME:-$HOME/.config}"
 
+# VS Code's config root moves with the install flavor. Mirrors vscode/install.sh.
+if [[ -d "$HOME/.var/app/com.visualstudio.code" ]]; then
+  vscode_user="$HOME/.var/app/com.visualstudio.code/config/Code/User"
+  vscode_ext="$HOME/.var/app/com.visualstudio.code/data/vscode/extensions"
+elif [[ "$(uname -s)" == "Darwin" ]]; then
+  vscode_user="$HOME/Library/Application Support/Code/User"
+  vscode_ext="$HOME/.vscode/extensions"
+else
+  vscode_user="$xdg/Code/User"
+  vscode_ext="$HOME/.vscode/extensions"
+fi
+
 # Every target the module installers can create.
 targets=(
   "$HOME/.bashrc"
@@ -52,6 +64,9 @@ targets=(
   "$xdg/opencode/opencode.json"
   "$xdg/opencode/tui.json"
   "$xdg/opencode/themes/muted-ink.json"
+  "$vscode_user/settings.json"
+  "$vscode_ext/dotfiles.muted-ink-1.0.0"
+  "$HOME/.local/bin/code"
   "$HOME/.local/bin/bd"
   "$HOME/.local/bin/bdsplit"
   "$HOME/.local/bin/bdf"
@@ -87,5 +102,11 @@ for t in "${targets[@]}"; do
     fi
   fi
 done
+
+if [[ -f "$vscode_ext/extensions.json" ]] &&
+  grep -q '"dotfiles.muted-ink"' "$vscode_ext/extensions.json" 2>/dev/null; then
+  echo "Note: the Muted Ink theme is still registered with VS Code."
+  echo "      Remove it with: code --uninstall-extension dotfiles.muted-ink"
+fi
 
 echo "Uninstall complete. Restart your shell to drop shell changes."
