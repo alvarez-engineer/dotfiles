@@ -19,7 +19,7 @@ all of them or just the ones you want.
 | `cli`     | bat, ripgrep, fzf (theming + config) | `~/.config/{bat,ripgrep}` |
 | `opencode`| opencode AI coding agent config + muted-ink theme | `~/.config/opencode` |
 | `vscode`  | Minimal settings, muted-ink theme, workbench layout, `code` shim, tmux terminal profile | `Code/User`, extensions dir, `~/.local/bin/{code,dev-shell}` |
-| `claude`  | Claude Code: `dark-ansi` theme, muted-ink status line | `~/.claude` |
+| `claude`  | Claude Code: `dark-ansi` theme, rich muted-ink status line (git state, context usage, cost) | `~/.claude` |
 | `notes`   | Plain-text brain dumps + a marker router into standing lists | `~/.local/bin/{bd,bdsplit,bdf,bdg}`, `~/notes` |
 
 ## Quick start
