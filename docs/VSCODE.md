@@ -114,6 +114,7 @@ Two settings are worth calling out:
 ## Theme
 
 `Muted Ink` is a local extension, not a Marketplace install.
+[See what it looks like](muted-ink-preview.html) before installing.
 
 **Dropping the folder into the extensions directory does not work.** A current
 VS Code treats `extensions.json` — not the directory listing — as the

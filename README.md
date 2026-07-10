@@ -123,6 +123,9 @@ Full details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - Ghostty: [macOS](docs/MACOS.md) · [Linux](docs/LINUX.md) · [Fonts](docs/FONTS.md) · [Themes](docs/THEMES.md) · [Keybindings](docs/KEYBINDS.md) · [Shell integration](docs/SHELL_INTEGRATION.md) · [Prompt](docs/PROMPT.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md) · [Maintenance](docs/MAINTENANCE.md) · [Community cheatsheet](docs/COMMUNITY_CHEATSHEET.md) · [References](docs/REFERENCES.md)
 
+The `muted-ink` palette has a [visual preview](docs/muted-ink-preview.html) — open it
+from disk, it needs no build step and pulls in nothing external.
+
 ## Uninstall
 
 ```bash
