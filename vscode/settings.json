@@ -78,7 +78,12 @@
   "editor.formatOnSave": false,
 
   // --- Terminal --------------------------------------------------------------
-  "terminal.integrated.cursorBlinking": true,
+  // These mirror ghostty/config.ghostty, so the integrated terminal behaves like
+  // the one outside the window: `cursor-style = block`, `cursor-style-blink =
+  // false`, `copy-on-select = true`. A blinking cursor here and a steady one in
+  // Ghostty is the kind of mismatch you feel before you can name it.
   "terminal.integrated.cursorStyle": "block",
+  "terminal.integrated.cursorBlinking": false,
+  "terminal.integrated.copyOnSelection": true,
   "terminal.integrated.smoothScrolling": true
 }

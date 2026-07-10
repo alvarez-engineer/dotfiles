@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Muted Ink — VS Code</title>
+<!--
+  Standalone preview of the muted-ink VS Code theme. Hand-written, self-contained:
+  no external stylesheets, scripts, fonts, or images. Open it directly in a browser
+  (file:// works) -- there is no build step and nothing to serve.
+
+  Every hex here is copied from vscode/extensions/muted-ink/themes/muted-ink-color-theme.json.
+  If you change the palette, change this too; docs/THEMES.md lists every expression.
+-->
+<style>
+  /* ---- Page tokens. The specimen window is invariant; the page adapts. ---- */
+  :root {
+    --page:      #eef1f1;
+    --page-2:    #e4e9e9;
+    --ink:       #1c2226;
+    --ink-dim:   #5b666d;
+    --rule:      #d2d9d9;
+    --accent:    #4d7a7d;
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /* ---- muted-ink, verbatim. Never redefined by theme. ---- */
+    --bg:      #0d1117;
+    --bg2:     #161b22;
+    --sel:     #263241;
+    --fg:      #c9d1d9;
+    --fg2:     #e6edf3;
+    --dim:     #6b7280;
+    --gutter:  #4b5563;
+    --guide:   #21262d;
+    --red:     #b26a6a;
+    --green:   #7a9b76;
+    --yellow:  #b8a06a;
+    --blue:    #6f8faf;
+    --purple:  #9a7eaa;
+    --cyan:    #6e9a9a;
+    --bred:    #c47a7a;
+    --bgreen:  #8baf87;
+    --byellow: #c7ae77;
+    --bblue:   #7e9fbc;
+    --bpurple: #aa8cbc;
+    --bcyan:   #7dabab;
+    --teal:    #7aa2a5;
+    --addBg:   #16301c;
+    --delBg:   #3a1d1d;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --page:    #0b0e13;
+      --page-2:  #11161d;
+      --ink:     #c9d1d9;
+      --ink-dim: #6b7280;
+      --rule:    #1f2630;
+      --accent:  #7aa2a5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page:    #0b0e13;
+    --page-2:  #11161d;
+    --ink:     #c9d1d9;
+    --ink-dim: #6b7280;
+    --rule:    #1f2630;
+    --accent:  #7aa2a5;
+  }
+  :root[data-theme="light"] {
+    --page:    #eef1f1;
+    --page-2:  #e4e9e9;
+    --ink:     #1c2226;
+    --ink-dim: #5b666d;
+    --rule:    #d2d9d9;
+    --accent:  #4d7a7d;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--page);
+    background-image: radial-gradient(var(--rule) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: clamp(2rem, 6vw, 5rem) clamp(1rem, 4vw, 2rem) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  /* ---- Masthead ---- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    margin: 0 0 0.9rem;
+  }
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 5.5vw, 3.1rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  h1 .sub { color: var(--ink-dim); }
+  .lede {
+    max-width: 64ch;
+    margin: 1.1rem 0 0;
+    font-size: 1.05rem;
+    color: var(--ink-dim);
+  }
+  .lede code {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    color: var(--ink);
+  }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-weight: 600;
+    color: var(--ink-dim);
+    margin: 0 0 1.4rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  section { display: block; }
+  .note {
+    max-width: 68ch;
+    margin: 1.3rem 0 0;
+    color: var(--ink-dim);
+    font-size: 0.94rem;
+  }
+  .note strong { color: var(--ink); font-weight: 600; }
+  .note code, .cell code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    color: var(--ink);
+  }
+
+  /* ================= The specimen window ================= */
+  .window {
+    background: var(--bg);
+    border: 1px solid #1f2630;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 0 rgba(122, 162, 165, 0.08),
+      0 24px 60px -18px rgba(0, 0, 0, 0.55);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--fg);
+  }
+  .window * { box-sizing: border-box; }
+
+  /* titleBar: flat, same ground as the editor */
+  .titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.85rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--bg2);
+    color: var(--dim);
+    font-size: 11.5px;
+  }
+  .dots { display: flex; gap: 6px; }
+  .dots i {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--sel); display: block;
+  }
+  .titlebar .name { margin-left: auto; margin-right: auto; letter-spacing: 0.02em; }
+
+  /* activityBar.location = top */
+  .activity {
+    display: flex;
+    align-items: center;
+    gap: 1.35rem;
+    padding: 0.5rem 0.9rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--bg2);
+    color: var(--dim);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .activity .on {
+    color: var(--fg2);
+    box-shadow: inset 0 -2px 0 var(--teal);
+    padding-bottom: 2px;
+  }
+  .activity .badge {
+    margin-left: auto;
+    background: var(--teal);
+    color: var(--bg);
+    border-radius: 10px;
+    padding: 0 7px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .body { display: grid; grid-template-columns: 190px 1fr; }
+  @media (max-width: 720px) {
+    .body { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  .sidebar {
+    background: var(--bg);
+    border-right: 1px solid var(--bg2);
+    padding: 0.7rem 0;
+    font-size: 12px;
+  }
+  .sidebar .hdr {
+    color: var(--dim);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0 0.9rem 0.6rem;
+  }
+  .sidebar ul { list-style: none; margin: 0; padding: 0; }
+  .sidebar li {
+    padding: 0.17rem 0.9rem;
+    color: var(--fg);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sidebar li.dir { color: var(--dim); }
+  .sidebar li.active { background: var(--sel); color: var(--fg2); }
+  .sidebar li.mod { color: var(--byellow); }
+  .sidebar li.untracked { color: var(--bgreen); }
+  .sidebar li.ignored { color: var(--gutter); }
+  .indent { padding-left: 1.7rem !important; }
+
+  /* Flat tabs; active marked only by a teal top rule */
+  .tabs {
+    display: flex;
+    background: var(--bg);
+    border-bottom: 1px solid var(--bg2);
+  }
+  .tab {
+    padding: 0.5rem 1rem;
+    color: var(--dim);
+    font-size: 12px;
+    border-top: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--fg2);
+    border-top-color: var(--teal);
+  }
+
+  /* stickyScroll */
+  .sticky {
+    padding: 0.25rem 0 0.25rem 3.9rem;
+    color: var(--dim);
+    border-bottom: 1px solid var(--bg2);
+    font-size: 12.5px;
+  }
+
+  .code { padding: 0.55rem 0 0.9rem; overflow-x: auto; }
+  .row { display: flex; white-space: pre; min-height: 1.65em; }
+  .row.cur { background: var(--bg2); }
+  .ln {
+    width: 3.4rem;
+    flex: none;
+    text-align: right;
+    padding-right: 1rem;
+    color: var(--gutter);
+    user-select: none;
+  }
+  .row.cur .ln { color: var(--teal); }
+  .ln.add { color: var(--green); }
+  .ln.del { color: var(--red); }
+  .src { padding-right: 1.2rem; }
+  /* indent guide */
+  .g { border-left: 1px solid var(--guide); margin-left: 0.06em; padding-left: 0.94em; }
+
+  .c  { color: var(--dim); font-style: italic; }
+  .k  { color: var(--purple); }
+  .f  { color: var(--bblue); }
+  .s  { color: var(--green); }
+  .n  { color: var(--byellow); }
+  .t  { color: var(--byellow); }
+  .o  { color: var(--teal); }
+  .v  { color: var(--fg); }
+  .p  { color: var(--blue); }
+  .self { color: var(--bpurple); font-style: italic; }
+  .esc { color: var(--bcyan); }
+  .sel { background: var(--sel); }
+  .b1 { color: var(--teal); }
+  .b2 { color: var(--bblue); }
+  .b3 { color: var(--bpurple); }
+
+  .rowadd { background: var(--addBg); }
+  .rowdel { background: var(--delBg); }
+
+  /* panel + terminal */
+  .panel {
+    border-top: 1px solid var(--bg2);
+    background: var(--bg);
+  }
+  .paneltabs {
+    display: flex; gap: 1.3rem;
+    padding: 0.45rem 0.95rem 0;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--dim);
+  }
+  .paneltabs .on {
+    color: var(--fg2);
+    box-shadow: inset 0 -2px 0 var(--teal);
+    padding-bottom: 0.4rem;
+  }
+  .term { padding: 0.7rem 0.95rem 0.9rem; white-space: pre; overflow-x: auto; font-size: 12.5px; }
+
+  .statusbar {
+    display: flex; align-items: center; gap: 1.1rem;
+    padding: 0.35rem 0.95rem;
+    background: var(--bg);
+    border-top: 1px solid var(--bg2);
+    color: var(--dim);
+    font-size: 11px;
+  }
+  .statusbar .right { margin-left: auto; }
+  .statusbar .err { color: var(--bred); }
+  .statusbar .warn { color: var(--byellow); }
+
+  /* ================= Palette ================= */
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .sw { background: var(--page); padding: 0; }
+  .chip { height: 62px; display: block; }
+  .swmeta {
+    padding: 0.55rem 0.7rem 0.7rem;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .swmeta .role { color: var(--ink); display: block; }
+  .swmeta .hex {
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ================= Tables ================= */
+  .scroll { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  caption { text-align: left; color: var(--ink-dim); font-size: 0.9rem; padding-bottom: 0.8rem; }
+  th, td {
+    text-align: left;
+    padding: 0.62rem 0.9rem 0.62rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-dim);
+    font-weight: 600;
+  }
+  td.tok { font-family: var(--mono); color: var(--ink); white-space: nowrap; }
+  td.hex {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    white-space: nowrap;
+  }
+  .dot {
+    display: inline-block;
+    width: 0.7em; height: 0.7em;
+    border-radius: 2px;
+    margin-right: 0.55em;
+    vertical-align: baseline;
+  }
+  .spec { font-family: var(--mono); font-size: 0.86em; }
+
+  /* ================= Decisions ================= */
+  .grid2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
+    gap: 1.6rem 2.4rem;
+  }
+  .cell h3 {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--ink);
+    margin: 0 0 0.35rem;
+    font-weight: 600;
+  }
+  .cell p { margin: 0; color: var(--ink-dim); font-size: 0.92rem; }
+
+  .ansi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--rule);
+  }
+  .ansi span { flex: 1 0 6.25%; height: 40px; min-width: 34px; }
+
+  footer {
+    color: var(--ink-dim);
+    font-size: 0.86rem;
+    border-top: 1px solid var(--rule);
+    padding-top: 1.6rem;
+    font-family: var(--mono);
+  }
+  footer a { color: var(--accent); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">dotfiles &middot; one palette, every tool</p>
+    <h1>Muted Ink <span class="sub">/ VS Code</span></h1>
+    <p class="lede">
+      A dark-only theme with low-glare contrast and restrained blue&#8202;/&#8202;green&#8202;/&#8202;slate accents,
+      re-expressed for VS Code from the same palette that drives Ghostty, Neovim, tmux, and
+      <code>git&nbsp;delta</code>. Teal <code>#7aa2a5</code> is the only accent in the workbench &mdash;
+      cursor, active line number, active tab, focus ring.
+    </p>
+  </header>
+
+  <!-- ===================== SPECIMEN ===================== -->
+  <section>
+    <h2>The workbench</h2>
+
+    <div class="window">
+      <div class="titlebar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="name">code &mdash; dotfiles</span>
+      </div>
+
+      <div class="activity">
+        <span class="on">Explorer</span>
+        <span>Search</span>
+        <span>Source Control</span>
+        <span>Run</span>
+        <span class="badge">3</span>
+      </div>
+
+      <div class="body">
+        <nav class="sidebar" aria-label="Explorer">
+          <p class="hdr">dotfiles</p>
+          <ul>
+            <li class="dir">&#9662; vscode</li>
+            <li class="indent active">code</li>
+            <li class="indent mod">settings.json</li>
+            <li class="indent untracked">install.sh</li>
+            <li class="dir">&#9656; nvim</li>
+            <li class="dir">&#9656; ghostty</li>
+            <li class="mod">Makefile</li>
+            <li class="ignored">.obsolete</li>
+          </ul>
+        </nav>
+
+        <div>
+          <div class="tabs">
+            <span class="tab active">code</span>
+            <span class="tab">settings.json</span>
+            <span class="tab">muted-ink-color-theme.json</span>
+          </div>
+
+          <div class="sticky">native_code()</div>
+
+          <div class="code">
+<div class="row"><span class="ln">28</span><span class="src"><span class="c"># The first `code` on PATH that is not this script. `-ef` compares</span></span></div>
+<div class="row"><span class="ln">29</span><span class="src"><span class="c"># device+inode through symlinks, so it recognizes us.</span></span></div>
+<div class="row"><span class="ln">30</span><span class="src"><span class="f">native_code</span><span class="o">()</span> <span class="b1">{</span></span></div>
+<div class="row"><span class="ln">31</span><span class="src"><span class="g"><span class="k">local</span> <span class="v">dir</span> <span class="v">cand</span></span></span></div>
+<div class="row"><span class="ln">32</span><span class="src"><span class="g"><span class="k">local</span> <span class="o">-a</span> <span class="v">dirs</span></span></span></div>
+<div class="row"><span class="ln">33</span><span class="src"><span class="g"><span class="v">IFS</span><span class="o">=</span><span class="n">:</span> <span class="f">read</span> <span class="o">-r</span> <span class="o">-a</span> <span class="v">dirs</span> <span class="o">&lt;&lt;&lt;</span><span class="s">"$PATH"</span></span></span></div>
+<div class="row cur"><span class="ln">34</span><span class="src"><span class="g"><span class="k">for</span> <span class="v">dir</span> <span class="k">in</span> <span class="s">"<span class="self">${dirs[@]}</span>"</span><span class="p">;</span> <span class="k">do</span></span></span></div>
+<div class="row"><span class="ln">35</span><span class="src"><span class="g"><span class="g"><span class="v">cand</span><span class="o">=</span><span class="s">"$dir<span class="esc">/code</span>"</span></span></span></span></div>
+<div class="row"><span class="ln">36</span><span class="src"><span class="g"><span class="g"><span class="b2">[[</span> <span class="o">-f</span> <span class="s">"$cand"</span> <span class="o">&amp;&amp;</span> <span class="o">-x</span> <span class="s">"$cand"</span> <span class="b2">]]</span> <span class="o">||</span> <span class="k">continue</span></span></span></span></div>
+<div class="row"><span class="ln">37</span><span class="src"><span class="g"><span class="g"><span class="b3">[[</span> <span class="sel"><span class="s">"$cand"</span> <span class="o">-ef</span> <span class="s">"$0"</span></span> <span class="b3">]]</span> <span class="o">&amp;&amp;</span> <span class="k">continue</span></span></span></span></div>
+<div class="row"><span class="ln">38</span><span class="src"><span class="g"><span class="g"><span class="f">printf</span> <span class="s">'<span class="esc">%s\n</span>'</span> <span class="s">"$cand"</span></span></span></span></div>
+<div class="row"><span class="ln">39</span><span class="src"><span class="g"><span class="g"><span class="k">return</span> <span class="n">0</span></span></span></span></div>
+<div class="row"><span class="ln">40</span><span class="src"><span class="g"><span class="k">done</span></span></span></div>
+<div class="row"><span class="ln">41</span><span class="src"><span class="g"><span class="k">return</span> <span class="n">1</span></span></span></div>
+<div class="row"><span class="ln">42</span><span class="src"><span class="b1">}</span></span></div>
+<div class="row"><span class="ln">43</span><span class="src"> </span></div>
+<div class="row rowdel"><span class="ln del">44</span><span class="src"><span class="o">-</span> <span class="f">exec</span> <span class="v">flatpak</span> <span class="v">run</span> <span class="v">com.visualstudio.code</span> <span class="s">"$@"</span></span></div>
+<div class="row rowadd"><span class="ln add">44</span><span class="src"><span class="o">+</span> <span class="f">exec</span> <span class="v">flatpak</span> <span class="v">run</span> <span class="o">--filesystem</span><span class="o">=</span><span class="n">/tmp</span> <span class="v">com.visualstudio.code</span> <span class="s">"$@"</span></span></div>
+          </div>
+
+          <div class="panel">
+            <div class="paneltabs">
+              <span class="on">Terminal</span>
+              <span>Problems</span>
+              <span>Output</span>
+            </div>
+            <div class="term"><span style="color:#7aa2a5">~/projects/dotfiles</span> <span style="color:#6b7280">$</span> make check
+<span style="color:#6b7280">bash -n</span>
+<span style="color:#6b7280">zsh -n</span>
+<span style="color:#6b7280">shellcheck</span>
+<span style="color:#6b7280">luacheck nvim/</span>
+Total: <span style="color:#8baf87">0</span> warnings / <span style="color:#8baf87">0</span> errors in 10 files
+<span style="color:#7aa2a5">~/projects/dotfiles</span> <span style="color:#6b7280">$</span> <span style="background:#263241">&nbsp;</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="statusbar">
+        <span>main*</span>
+        <span><span class="err">&#10007; 0</span>&nbsp;&nbsp;<span class="warn">&#9888; 0</span></span>
+        <span class="right">Ln 37, Col 24</span>
+        <span>Spaces: 2</span>
+        <span>Shell Script</span>
+      </div>
+    </div>
+
+    <p class="note">
+      Everything above sits on one ground, <code>#0d1117</code>. The activity bar, side bar,
+      tabs, panel, and status bar are not given contrasting fills &mdash; they're separated by
+      <code>#161b22</code> hairlines. The active tab is marked by a single teal rule, and the
+      active line by its gutter number alone.
+    </p>
+  </section>
+
+  <!-- ===================== PALETTE ===================== -->
+  <section>
+    <h2>Palette</h2>
+    <div class="swatches">
+      <div class="sw"><span class="chip" style="background:#0d1117"></span><span class="swmeta"><span class="role">bg</span><span class="hex">#0d1117</span></span></div>
+      <div class="sw"><span class="chip" style="background:#161b22"></span><span class="swmeta"><span class="role">bg2</span><span class="hex">#161b22</span></span></div>
+      <div class="sw"><span class="chip" style="background:#263241"></span><span class="swmeta"><span class="role">sel</span><span class="hex">#263241</span></span></div>
+      <div class="sw"><span class="chip" style="background:#4b5563"></span><span class="swmeta"><span class="role">gutter</span><span class="hex">#4b5563</span></span></div>
+      <div class="sw"><span class="chip" style="background:#6b7280"></span><span class="swmeta"><span class="role">dim</span><span class="hex">#6b7280</span></span></div>
+      <div class="sw"><span class="chip" style="background:#c9d1d9"></span><span class="swmeta"><span class="role">fg</span><span class="hex">#c9d1d9</span></span></div>
+      <div class="sw"><span class="chip" style="background:#e6edf3"></span><span class="swmeta"><span class="role">fg2</span><span class="hex">#e6edf3</span></span></div>
+      <div class="sw"><span class="chip" style="background:#7aa2a5"></span><span class="swmeta"><span class="role">teal &middot; accent</span><span class="hex">#7aa2a5</span></span></div>
+    </div>
+
+    <h2 style="margin-top:2.4rem">Terminal ANSI &mdash; normal, then bright</h2>
+    <div class="ansi" role="img" aria-label="Sixteen ANSI terminal colors, normal row then bright row">
+      <span style="background:#0d1117"></span><span style="background:#b26a6a"></span><span style="background:#7a9b76"></span><span style="background:#b8a06a"></span>
+      <span style="background:#6f8faf"></span><span style="background:#9a7eaa"></span><span style="background:#6e9a9a"></span><span style="background:#c9d1d9"></span>
+      <span style="background:#4b5563"></span><span style="background:#c47a7a"></span><span style="background:#8baf87"></span><span style="background:#c7ae77"></span>
+      <span style="background:#7e9fbc"></span><span style="background:#aa8cbc"></span><span style="background:#7dabab"></span><span style="background:#e6edf3"></span>
+    </div>
+  </section>
+
+  <!-- ===================== TOKENS ===================== -->
+  <section>
+    <h2>Syntax</h2>
+    <div class="scroll">
+      <table>
+        <caption>The same token&rarr;color table as <span class="spec">opencode/themes/muted-ink.json</span> and <span class="spec">nvim/colors/muted-ink.lua</span>, on purpose &mdash; a keyword is <span class="spec">purple</span> in all three.</caption>
+        <thead>
+          <tr><th scope="col">Token</th><th scope="col">Role</th><th scope="col">Hex</th><th scope="col">Style</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="tok"><span class="dot" style="background:#6b7280"></span>comment</td><td>dim</td><td class="hex">#6b7280</td><td>italic</td></tr>
+          <tr><td class="tok"><span class="dot" style="background:#9a7eaa"></span>keyword</td><td>purple</td><td class="hex">#9a7eaa</td><td>&mdash;</td></tr>
+          <tr><td class="tok"><span class="dot" style="background:#7e9fbc"></span>function</td><td>bright blue</td><td class="hex">#7e9fbc</td><td>&mdash;</td></tr>
+          <tr><td class="tok"><span class="dot" style="background:#7a9b76"></span>string</td><td>green</td><td class="hex">#7a9b76</td><td>&mdash;</td></tr>
+          <tr><td class="tok"><span class="dot" style="background:#c7ae77"></span>number, type</td><td>bright yellow</td><td class="hex">#c7ae77</td><td>&mdash;</td></tr>
+          <tr><td class="tok"><span class="dot" style="background:#7aa2a5"></span>operator</td><td>teal</td><td class="hex">#7aa2a5</td><td>&mdash;</td></tr>
+          <tr><td class="tok"><span class="dot" style="background:#6f8faf"></span>property</td><td>blue</td><td class="hex">#6f8faf</td><td>&mdash;</td></tr>
+          <tr><td class="tok"><span class="dot" style="background:#aa8cbc"></span>this, self, decorator</td><td>bright purple</td><td class="hex">#aa8cbc</td><td>italic</td></tr>
+          <tr><td class="tok"><span class="dot" style="background:#c9d1d9"></span>variable, punctuation</td><td>fg</td><td class="hex">#c9d1d9</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== DECISIONS ===================== -->
+  <section>
+    <h2>What the settings do</h2>
+    <div class="grid2">
+      <div class="cell">
+        <h3>Subtraction, mostly</h3>
+        <p>Minimap, breadcrumbs, command center, layout control, and per-editor action buttons are all off &mdash; each duplicated something the editor already showed.</p>
+      </div>
+      <div class="cell">
+        <h3>Activity bar on top</h3>
+        <p>It costs a row instead of a column, which is the cheaper axis on a widescreen display.</p>
+      </div>
+      <div class="cell">
+        <h3>A real font stack</h3>
+        <p>Ghostty <em>bundles</em> JetBrains Mono. VS Code bundles nothing, and <code>fc-match</code> answers <strong>Noto Sans</strong> &mdash; proportional &mdash; when it&rsquo;s missing. The stack falls back through Source Code Pro to <code>monospace</code>.</p>
+      </div>
+      <div class="cell">
+        <h3><code>formatOnSave</code> stays off</h3>
+        <p>Formatting is a per-project decision. A global default rewrites files in repos that never asked for it.</p>
+      </div>
+      <div class="cell">
+        <h3>Bracket pairs, no guides</h3>
+        <p>Colorized pairs in teal, blue, and purple carry the nesting; the vertical bracket guides that would restate it are off.</p>
+      </div>
+      <div class="cell">
+        <h3>One accent, held back</h3>
+        <p>Teal appears on the cursor, the active line number, the active tab rule, the focus ring, and buttons. Nothing else competes for it.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      <code>./install.sh vscode</code> &nbsp;&middot;&nbsp; the theme is registered from a generated
+      <code>.vsix</code>, then symlinked back into the repo, so editing it here changes the live
+      config on the next window.
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>

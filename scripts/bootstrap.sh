@@ -54,6 +54,18 @@ detect_os() {
   esac
 }
 
+# JetBrains Mono has to be installed system-wide even though ghostty/config.ghostty
+# names it and looks fine without it: Ghostty *embeds* the font, so the terminal
+# renders correctly on a machine where fontconfig has never heard of it. Nothing
+# else does. VS Code in particular resolves `editor.fontFamily` through fontconfig,
+# and `fc-match "JetBrains Mono"` answers *Noto Sans* -- proportional -- when the
+# font is missing, quietly un-monospacing the editor. So the terminal and the
+# editor drift apart while every config file claims they agree.
+#
+# Not fatal: vscode/settings.json falls back through Source Code Pro, and Ghostty
+# never needed it. Warn and carry on, as with eza/git-delta below.
+font_warn="JetBrains Mono not installed; ghostty embeds it but VS Code will fall back"
+
 install_starship() {
   if have starship; then log "starship already installed"; return 0; fi
   log "installing starship (official script)"
@@ -77,6 +89,7 @@ install_opencode() {
 bootstrap_fedora() {
   info "Fedora: installing tools via dnf"
   sudo_run dnf install -y neovim tmux fzf ripgrep bat eza git-delta zsh fd-find git
+  sudo_run dnf install -y jetbrains-mono-fonts || warn "$font_warn"
   install_starship
   install_opencode
   if [[ "$dev" == "true" ]]; then
@@ -93,6 +106,7 @@ bootstrap_debian() {
   # eza and git-delta are not in older apt repos; try, but don't fail the run.
   sudo_run apt-get install -y eza  || warn "eza not packaged here; install manually if wanted"
   sudo_run apt-get install -y git-delta || warn "git-delta not in apt; see delta releases page"
+  sudo_run apt-get install -y fonts-jetbrains-mono || warn "$font_warn"
   warn "Debian names: 'bat' -> batcat, 'fd' -> fdfind (alias or symlink as desired)"
   install_starship
   install_opencode
@@ -108,6 +122,7 @@ bootstrap_macos() {
   have brew || die "Homebrew not found. Install it from https://brew.sh, then re-run."
   run brew install neovim tmux fzf ripgrep bat eza git-delta starship zsh fd git opencode
   run brew install --cask ghostty || warn "ghostty cask skipped (already installed?)"
+  run brew install --cask font-jetbrains-mono || warn "$font_warn"
   if [[ "$dev" == "true" ]]; then
     info "dev linters"
     run brew install shellcheck luacheck

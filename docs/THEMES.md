@@ -4,6 +4,10 @@ This repo ships one custom theme:
 
 - `muted-ink`
 
+**[Open the preview](muted-ink-preview.html)** to see it: a mock VS Code workbench,
+the palette, the ANSI strip, and the syntax token table. It is a standalone HTML file
+with no external assets — open it straight from disk, there is nothing to build.
+
 The palette is defined in:
 
 ```text
