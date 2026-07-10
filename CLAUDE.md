@@ -12,7 +12,7 @@ files, and a small Lua Neovim config, all themed to one `muted-ink` palette.
 ## Commands
 
 ```bash
-./install.sh [--bootstrap] [--copy] [--dry-run] [MODULE ...]  # MODULES: ghostty shell git tmux nvim cli opencode vscode notes
+./install.sh [--bootstrap] [--copy] [--dry-run] [MODULE ...]  # MODULES: ghostty shell git tmux nvim cli opencode vscode claude notes
 make bootstrap [bootstrap-dev]  # install tool BINARIES via dnf/apt/brew (sudo); -dev adds linters
 make all                     # bootstrap + install in one shot
 make install / dry-run / uninstall
@@ -48,7 +48,7 @@ deliberately, confirm `make check` is non-zero, then restore it.
 ## Architecture (the important part)
 
 **Module = top-level directory + its own `install.sh`.** The modules are
-`ghostty/ shell/ git/ tmux/ nvim/ cli/ opencode/ vscode/ notes/`. The root `install.sh` is
+`ghostty/ shell/ git/ tmux/ nvim/ cli/ opencode/ vscode/ claude/ notes/`. The root `install.sh` is
 only an orchestrator: it sets three env vars and then sources each selected
 module's installer.
 
@@ -97,6 +97,26 @@ the theme while VS Code is running *deletes* `workbench.colorTheme` from the tra
 file rather than leaving a dangling name. And Fedora's VS Code is a flatpak with no
 `code` on `PATH`, which is why `vscode/bin/code` exists; it must defer to a native
 `code` because `shell/bashrc` *prepends* `~/.local/bin`.
+
+**A flatpak VS Code runs its integrated terminal inside the sandbox**, where `PATH` is
+`/app/bin:/usr/bin` — bash, git, python3, and *none* of tmux, nvim, ripgrep, fzf, or
+claude. So `vscode/bin/dev-shell` is the terminal profile: `/.flatpak-info` detects the
+sandbox, `host-spawn` (or `flatpak-spawn --host`) re-execs the script on the host, where
+that file is absent so it cannot recurse, and it then attaches one tmux session per
+project directory. Both spawn helpers preserve cwd but **neither forwards the
+environment** — `host-spawn` passes only `$TERM` unless told otherwise, and a dropped
+variable fails silently. That same sandbox needs no special case in `vscode/bin/code`:
+its PATH scan finds `/app/bin/code` and defers to it.
+
+**`claude/settings.json` is seeded, never symlinked.** Claude Code has no user-level
+`.local` layer (`settings.local.json` is project-scoped), and `~/.claude/settings.json`
+mixes portable preferences with `enabledPlugins` and `skipDangerousModePermissionPrompt`
+— a security posture that must not enter version control. `claude/install.sh` seeds it
+only when absent and prints hints otherwise; `uninstall.sh` leaves it. Its `statusLine`
+command gets an absolute path baked in at seed time, because a leading `~` is not
+reliably expanded there. `claude/statusline.sh` and Claude Code's `dark-ansi` theme both
+paint from the 16 ANSI colors rather than muted-ink hex, so they inherit the palette from
+whichever terminal hosts them.
 
 ## Theming
 

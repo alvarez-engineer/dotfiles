@@ -1,0 +1,14 @@
+{
+  "theme": "dark-ansi",
+  "statusLine": {
+    "type": "command",
+    "command": "__HOME__/.claude/statusline.sh"
+  },
+  "model": "opus",
+  "effortLevel": "medium",
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  }
+}

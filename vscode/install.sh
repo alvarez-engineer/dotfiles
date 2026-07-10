@@ -37,6 +37,10 @@ link_file "$src/settings.json" "$user_dir/settings.json"
 # theme install below invokes it.
 link_file "$src/bin/code" "$bin_dir/code"
 
+# The integrated terminal's shell: hops out of the flatpak sandbox (which has no
+# tmux and no claude) and attaches one tmux session per project.
+link_file "$src/bin/dev-shell" "$bin_dir/dev-shell"
+
 # --- Theme ------------------------------------------------------------------
 #
 # Dropping an extension folder into the extensions directory does NOT work on a

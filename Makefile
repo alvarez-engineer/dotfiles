@@ -3,7 +3,7 @@ SHELL := /usr/bin/env bash
 .PHONY: install install-copy dry-run uninstall doctor backup validate check tree \
         bootstrap bootstrap-dev all \
         install-shell install-git install-tmux install-nvim install-ghostty install-cli install-opencode \
-        install-vscode install-notes
+        install-vscode install-claude install-notes
 
 # --- Bootstrap (install tool binaries; needs sudo on Linux) ----------------
 bootstrap:
@@ -35,6 +35,7 @@ install-ghostty: ; ./install.sh ghostty
 install-cli:     ; ./install.sh cli
 install-opencode:; ./install.sh opencode
 install-vscode:  ; ./install.sh vscode
+install-claude:  ; ./install.sh claude
 install-notes:   ; ./install.sh notes
 
 uninstall:
@@ -56,6 +57,7 @@ validate:
 # $(sort) also de-duplicates: ghostty/install.sh matches two globs below.
 SH_FILES := $(sort install.sh lib/common.sh $(wildcard */install.sh) $(wildcard scripts/*.sh) \
             $(wildcard ghostty/*.sh) $(wildcard notes/bin/*) $(wildcard vscode/bin/*) \
+            $(wildcard claude/*.sh) \
             shell/exports.sh shell/aliases.sh shell/functions.sh \
             shell/bashrc shell/prompt/bash_prompt.sh)
 
