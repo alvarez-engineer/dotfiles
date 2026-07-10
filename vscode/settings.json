@@ -1,0 +1,84 @@
+// VS Code user settings. Symlinked to the platform's Code/User/settings.json.
+//
+// VS Code rewrites this file whenever you change a setting from the UI. It edits
+// through the symlink, so those changes land in the repo -- `git diff` after a
+// settings-tweaking session, and commit what you meant to keep. If VS Code ever
+// replaces the link with a plain file, `make doctor` reports it as
+// "exists but is not a symlink".
+//
+// Machine-specific settings do not belong here; there is no *.local layer for
+// VS Code. Use a Workspace settings file (.vscode/settings.json) per project, or
+// Profiles for a per-machine variant.
+{
+  // --- Theme -----------------------------------------------------------------
+  // Ships with this repo as a local extension; see vscode/extensions/muted-ink.
+  // If VS Code is running when that extension is uninstalled, it *deletes* this
+  // key from the file rather than leaving a dangling theme name.
+  "workbench.colorTheme": "Muted Ink",
+  "window.autoDetectColorScheme": false,
+
+  // --- Typography ------------------------------------------------------------
+  // Ghostty *bundles* JetBrains Mono, so `font-family = JetBrains Mono` works
+  // there even when the font is not installed system-wide. VS Code bundles
+  // nothing: an unresolvable family silently falls back through fontconfig, and
+  // on this machine `fc-match "JetBrains Mono"` answers *Noto Sans* -- a
+  // proportional font. Hence a real stack, ending in fonts that exist.
+  "editor.fontFamily": "'JetBrains Mono', 'Source Code Pro', 'Adwaita Mono', 'Liberation Mono', monospace",
+  "editor.fontSize": 14,
+  "editor.fontLigatures": true,
+  "editor.lineHeight": 1.6,
+  "terminal.integrated.fontFamily": "'JetBrains Mono', 'Source Code Pro', 'Adwaita Mono', monospace",
+  "terminal.integrated.fontSize": 14,
+
+  // --- Minimal chrome --------------------------------------------------------
+  // Strip the ornaments that duplicate information the editor already shows.
+  "editor.minimap.enabled": false,
+  "breadcrumbs.enabled": false,
+  "workbench.activityBar.location": "top",
+  "workbench.layoutControl.enabled": false,
+  "workbench.editor.editorActionsLocation": "hidden",
+  "window.commandCenter": false,
+  "workbench.startupEditor": "none",
+  "workbench.tips.enabled": false,
+
+  // Tabs: flat, no boxes. The theme marks the active one with a top rule.
+  "workbench.editor.showTabs": "multiple",
+  "workbench.editor.tabSizing": "shrink",
+  // Preserved from your existing settings: a single click opens a real tab
+  // rather than an italic preview tab that the next click replaces.
+  "workbench.editor.enablePreview": false,
+
+  "workbench.tree.renderIndentGuides": "none",
+  "workbench.list.smoothScrolling": true,
+  "explorer.compactFolders": false,
+
+  // --- Editor surface --------------------------------------------------------
+  "editor.renderLineHighlight": "gutter",
+  "editor.overviewRulerBorder": false,
+  "editor.hideCursorInOverviewRuler": true,
+  "editor.scrollBeyondLastLine": false,
+  "editor.smoothScrolling": true,
+  "editor.cursorBlinking": "smooth",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.renderWhitespace": "boundary",
+  "editor.guides.indentation": true,
+  "editor.guides.bracketPairs": false,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.stickyScroll.enabled": true,
+  "editor.occurrencesHighlight": "singleFile",
+  "editor.rulers": [80, 100],
+
+  // --- Files -----------------------------------------------------------------
+  // Matches what the other tools in this repo already enforce on save.
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  // Deliberately off: formatting is a per-project decision, and a global
+  // formatOnSave rewrites files in repos that never asked for it.
+  "editor.formatOnSave": false,
+
+  // --- Terminal --------------------------------------------------------------
+  "terminal.integrated.cursorBlinking": true,
+  "terminal.integrated.cursorStyle": "block",
+  "terminal.integrated.smoothScrolling": true
+}

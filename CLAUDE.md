@@ -12,7 +12,7 @@ files, and a small Lua Neovim config, all themed to one `muted-ink` palette.
 ## Commands
 
 ```bash
-./install.sh [--bootstrap] [--copy] [--dry-run] [MODULE ...]  # MODULES: ghostty shell git tmux nvim cli opencode notes
+./install.sh [--bootstrap] [--copy] [--dry-run] [MODULE ...]  # MODULES: ghostty shell git tmux nvim cli opencode vscode notes
 make bootstrap [bootstrap-dev]  # install tool BINARIES via dnf/apt/brew (sudo); -dev adds linters
 make all                     # bootstrap + install in one shot
 make install / dry-run / uninstall
@@ -48,7 +48,7 @@ deliberately, confirm `make check` is non-zero, then restore it.
 ## Architecture (the important part)
 
 **Module = top-level directory + its own `install.sh`.** The modules are
-`ghostty/ shell/ git/ tmux/ nvim/ cli/ opencode/ notes/`. The root `install.sh` is
+`ghostty/ shell/ git/ tmux/ nvim/ cli/ opencode/ vscode/ notes/`. The root `install.sh` is
 only an orchestrator: it sets three env vars and then sources each selected
 module's installer.
 
@@ -75,6 +75,29 @@ module's installer.
   `uninstall.sh`); ghostty-specific helpers (`validate.sh`, `use-profile.sh`,
   `print-paths.sh`) live in `ghostty/`.
 
+**`vscode` is the one module that cannot just symlink its payload in**, and it breaks
+three of the rules above for reasons worth knowing before you "fix" it:
+
+- VS Code treats `extensions.json` in the extensions directory — not the directory
+  listing — as the authoritative record of installed user extensions. A folder merely
+  symlinked in is scanned, written into `.obsolete`, and ignored (`[info] Marked
+  extension as removed dotfiles.muted-ink-1.0.0`). So `vscode/install.sh` packages the
+  theme into a throwaway `.vsix`, registers it via `code --install-extension`, then
+  replaces VS Code's installed copy with a symlink back into the repo. The symlink
+  survives *because* the id is registered.
+- That swap deliberately uses `run rm -rf` + `run ln -s` instead of `link_file`.
+  `link_file` would rename the fresh copy to `<dir>.backup-<ts>` **inside** the
+  extensions directory, where VS Code would scan it as a second, orphaned extension.
+- It resolves a *pair* of roots (user config, extensions), and a flatpak install
+  relocates both. `scripts/doctor.sh` and `scripts/uninstall.sh` each mirror that
+  detection block — change one, change all three.
+
+Also: VS Code rewrites `settings.json` through the symlink, into the repo. Uninstalling
+the theme while VS Code is running *deletes* `workbench.colorTheme` from the tracked
+file rather than leaving a dangling name. And Fedora's VS Code is a flatpak with no
+`code` on `PATH`, which is why `vscode/bin/code` exists; it must defer to a native
+`code` because `shell/bashrc` *prepends* `~/.local/bin`.
+
 ## Theming
 
 `muted-ink` is defined once as a palette (hex in `ghostty/themes/muted-ink`) and
@@ -83,8 +106,11 @@ module's installer.
 `nvim/lua/plugins/lualine.lua`, `cli/bat/themes/muted-ink.tmTheme` (also used by
 git-delta via `syntax-theme = muted-ink`), `tmux/tmux.conf` status colors, the
 `[delta]` block in `git/gitconfig`, the `--colors`/`FZF_DEFAULT_OPTS` in
-`cli/ripgrep/ripgreprc` and `shell/exports.sh`, and
-`opencode/themes/muted-ink.json` (defs palette + full theme).
+`cli/ripgrep/ripgreprc` and `shell/exports.sh`,
+`opencode/themes/muted-ink.json` (defs palette + full theme), and
+`vscode/extensions/muted-ink/themes/muted-ink-color-theme.json`. The vscode and
+opencode syntax mappings are intentionally the same token→color table; keep them
+in step.
 
 ## Conventions
 

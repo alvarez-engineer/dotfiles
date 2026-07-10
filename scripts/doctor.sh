@@ -14,8 +14,20 @@ printf 'OS:       %s\n' "$(uname -srm)"
 printf 'shell:    %s\n' "${SHELL:-unknown}"
 printf 'XDG_CONFIG_HOME: %s\n\n' "$xdg"
 
+# VS Code's config root moves with the install flavor. Mirrors vscode/install.sh.
+if [[ -d "$HOME/.var/app/com.visualstudio.code" ]]; then
+  vscode_user="$HOME/.var/app/com.visualstudio.code/config/Code/User"
+  vscode_ext="$HOME/.var/app/com.visualstudio.code/data/vscode/extensions"
+elif [[ "$(uname -s)" == "Darwin" ]]; then
+  vscode_user="$HOME/Library/Application Support/Code/User"
+  vscode_ext="$HOME/.vscode/extensions"
+else
+  vscode_user="$xdg/Code/User"
+  vscode_ext="$HOME/.vscode/extensions"
+fi
+
 printf 'Tools:\n'
-for b in ghostty nvim tmux git starship fzf rg bat eza delta zsh opencode; do
+for b in ghostty nvim tmux git starship fzf rg bat eza delta zsh opencode code; do
   if command -v "$b" >/dev/null 2>&1; then
     printf '  [x] %-9s %s\n' "$b" "$(command -v "$b")"
   else
@@ -36,6 +48,9 @@ targets=(
   "$xdg/bat/config"
   "$xdg/ripgrep/ripgreprc"
   "$xdg/opencode/opencode.json"
+  "$vscode_user/settings.json"
+  "$vscode_ext/dotfiles.muted-ink-1.0.0"
+  "$HOME/.local/bin/code"
   "$HOME/.local/bin/bd"
   "$HOME/.local/bin/bdsplit"
   "$HOME/.local/bin/bdf"

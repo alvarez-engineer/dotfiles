@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# code — one `code` command on every machine, whatever VS Code is installed.
+#
+# Fedora's VS Code is a flatpak (com.visualstudio.code), which puts no `code` on
+# PATH: the exported launcher is named com.visualstudio.code, and its directory
+# (/var/lib/flatpak/exports/bin) is not on PATH by default. So `code file` and
+# EDITOR="code -w" both fail on an otherwise working install.
+#
+# Two things this has to get right.
+#
+# 1. It must not shadow a real VS Code. shell/bashrc and shell/zshrc *prepend*
+#    ~/.local/bin to PATH, so this file is found before /usr/bin/code on a
+#    machine with a native .rpm/.deb install, and before the macOS `code` shim.
+#    Hand off to that binary when it exists; only fall back to flatpak.
+#
+# 2. It passes --filesystem=/tmp to flatpak. Even with `filesystems=host`, a
+#    flatpak gets a *private* /tmp, so the sandbox cannot read a host /tmp file.
+#    Tools that hand $EDITOR a scratch file there (crontab -e, sudoedit) would
+#    otherwise open an empty buffer and silently discard the edit. `git commit`
+#    is unaffected -- its COMMIT_EDITMSG lives inside .git -- which is exactly
+#    why this bug is easy to miss.
+#
+# Deliberately no usage()/--dry-run, unlike other scripts in this repo: this is
+# a transparent shim and every argument belongs to VS Code, including -h/--help.
+# Set DOTFILES_CODE_DEBUG=1 to print the resolved command instead of running it.
+
+set -euo pipefail
+
+# The first `code` on PATH that is not this script. `-ef` compares device+inode
+# through symlinks, so it recognizes us via ~/.local/bin/code -> repo. Used
+# instead of `readlink -f`, which BSD/macOS lacked before Monterey.
+native_code() {
+  local dir cand
+  local -a dirs
+  IFS=: read -r -a dirs <<<"$PATH"
+  for dir in "${dirs[@]}"; do
+    [[ -n "$dir" ]] || continue
+    cand="$dir/code"
+    [[ -f "$cand" && -x "$cand" ]] || continue
+    [[ "$cand" -ef "$0" ]] && continue
+    printf '%s\n' "$cand"
+    return 0
+  done
+  return 1
+}
+
+if native="$(native_code)"; then
+  if [[ -n "${DOTFILES_CODE_DEBUG:-}" ]]; then
+    printf 'native: %s\n' "$native"
+    exit 0
+  fi
+  exec "$native" "$@"
+fi
+
+# `flatpak` itself is resolved through PATH: Homebrew and distro packages put it
+# in different places, and this repo never hardcodes a tool's absolute path.
+if command -v flatpak >/dev/null 2>&1 &&
+  flatpak info com.visualstudio.code >/dev/null 2>&1; then
+  if [[ -n "${DOTFILES_CODE_DEBUG:-}" ]]; then
+    printf 'flatpak: flatpak run --filesystem=/tmp com.visualstudio.code %s\n' "$*"
+    exit 0
+  fi
+  exec flatpak run --filesystem=/tmp com.visualstudio.code "$@"
+fi
+
+printf 'code: no VS Code found: no native code binary on PATH, and no\n' >&2
+printf 'code: com.visualstudio.code flatpak. Install one, or see docs/VSCODE.md\n' >&2
+exit 127
