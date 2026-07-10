@@ -50,6 +50,7 @@ targets=(
   "$xdg/opencode/opencode.json"
   "$vscode_user/settings.json"
   "$vscode_ext/dotfiles.muted-ink-1.0.0"
+  "$vscode_ext/dotfiles.workbench-1.0.0"
   "$HOME/.local/bin/code"
   "$HOME/.local/bin/dev-shell"
   "$HOME/.claude/statusline.sh"

@@ -6,8 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A cross-platform (Linux + macOS) **dotfiles** repo — configs for Ghostty, shell
 (bash/zsh), git, tmux, Neovim, and CLI tools (bat/fzf/ripgrep), installed by
-symlink. No build step, no application code. Everything is bash scripts, config
-files, and a small Lua Neovim config, all themed to one `muted-ink` palette.
+symlink. **No build step.** Almost entirely bash scripts, config files, and a
+small Lua Neovim config, all themed to one `muted-ink` palette. The one exception
+is `vscode/extensions/dotfiles-workbench` — a small plain-CommonJS VS Code
+extension (no bundler, no transpile), because a workbench layout and a status-bar
+item are extension-only APIs. It is gated by `node --check`, the JS analog of
+`bash -n`. So "no application code" narrowed to "no build step."
 
 ## Commands
 
@@ -106,7 +110,23 @@ that file is absent so it cannot recurse, and it then attaches one tmux session 
 project directory. Both spawn helpers preserve cwd but **neither forwards the
 environment** — `host-spawn` passes only `$TERM` unless told otherwise, and a dropped
 variable fails silently. That same sandbox needs no special case in `vscode/bin/code`:
-its PATH scan finds `/app/bin/code` and defers to it.
+its PATH scan finds `/app/bin/code` and defers to it. `dev-shell` also forwards
+`CLAUDE_CODE_SSE_PORT` across `host-spawn` so a host-side `claude` still auto-connects to
+the VS Code IDE server (diffs as editor tabs); that var is otherwise dropped at the
+boundary. It takes `--suffix NAME` (a second, independent session — the workbench's
+claude column uses `<dir>-cc`) and `--run CMD` (run once, only on session create, so a
+reattach never relaunches it).
+
+**The workbench layout is a coded extension, and both terminals must be editor-area
+terminals.** VS Code's bottom panel is a *single* dock, so it cannot be both
+under-the-editor and a right column at once — `vscode/extensions/dotfiles-workbench`
+therefore builds an editor grid (`vscode.setEditorLayout`) with two editor-area
+terminals rather than using the panel. It is idempotent: auto-build is skipped when a
+restored window (`enablePersistentSessions`) already put terminals in the editor area, so
+it never stacks a second set. Both extensions install the same way — `install.sh` packages
+each into a throwaway `.vsix`, registers it, then symlinks the repo dir over VS Code's
+copy (see the theme note above); the shared `install_local_extension` handles theme and
+code alike.
 
 **`claude/settings.json` is seeded, never symlinked.** Claude Code has no user-level
 `.local` layer (`settings.local.json` is project-scoped), and `~/.claude/settings.json`

@@ -1,11 +1,12 @@
 # VS Code
 
-The `vscode` module installs three things:
+The `vscode` module installs:
 
 | Repo file | Installed to | How |
 |-----------|--------------|-----|
 | `vscode/settings.json` | the platform's `Code/User/settings.json` | symlink |
 | `vscode/extensions/muted-ink/` | the extensions dir, as `dotfiles.muted-ink-1.0.0` | registered via `.vsix`, then symlinked — [see below](#theme) |
+| `vscode/extensions/dotfiles-workbench/` | the extensions dir, as `dotfiles.workbench-1.0.0` | same `.vsix`-then-symlink — [see below](#workbench-layout) |
 | `vscode/bin/code` | `~/.local/bin/code` | symlink |
 | `vscode/bin/dev-shell` | `~/.local/bin/dev-shell` | symlink — the integrated terminal's shell |
 
@@ -86,8 +87,19 @@ Claude Code at all.
 1. Detects the sandbox by `/.flatpak-info` and re-execs itself on the host through
    `host-spawn` (or `flatpak-spawn --host`). On the host that file is absent, so it
    does not recurse.
-2. Attaches — or creates — **one tmux session per project**, named for the working
-   directory, with `.` and `:` replaced (tmux forbids them in session names).
+2. Attaches — or creates — **one tmux session**, named for the working directory
+   (with `.` and `:` replaced, which tmux forbids in session names), plus an
+   optional `--suffix` — the workbench's Claude column uses `<dir>-cc` so it is an
+   independent session, not a mirror of the main one.
+3. Runs a one-off command with `--run "CMD"`, but only when the session is first
+   *created* — so reattaching (a later terminal, or VS Code restoring the session)
+   never relaunches it.
+
+One pane per terminal, on purpose: the workbench layout (below) is what places two
+terminals, so `dev-shell` no longer splits its own pane. It also forwards
+`CLAUDE_CODE_SSE_PORT` across `host-spawn`, so a `claude` started on the host still
+finds the VS Code IDE server and opens its diffs as editor tabs — without that, the
+auto-connect is silently lost at the sandbox boundary.
 
 Both spawn helpers preserve the working directory, which the session name depends
 on. **Neither forwards the environment**: `host-spawn` passes only `$TERM` unless
@@ -96,7 +108,9 @@ simply empty on the far side. `dev-shell` names them explicitly.
 
 The payoff is that the terminal inside VS Code and `tmux attach -t <dir>` from
 Ghostty are the *same session*. Closing the editor does not kill the shell, and
-switching windows costs no state.
+switching windows costs no state. Terminal persistence is left **on**
+(`enablePersistentSessions: true`): the tmux server is a host daemon that outlives
+the editor, so restore reattaches the live session rather than reviving a dead one.
 
 `DOTFILES_DEV_SHELL_NO_TMUX=1` gives a plain login shell.
 
@@ -110,6 +124,48 @@ binding, so the two coexist.
 If a chord is ever swallowed, `"terminal.integrated.sendKeybindingsToShell": true`
 sends every keystroke to the shell — at the cost of VS Code's own shortcuts while
 the terminal has focus.
+
+## Workbench layout
+
+`vscode/extensions/dotfiles-workbench` lays each project into one fixed shape when
+you open it:
+
+```text
+┌──────────┬─────────────────────┬───────────────┐
+│ Explorer │  file / git diff    │    claude     │
+│          │─────────────────────│  (ready shell)│
+│          │  terminal           │               │
+└──────────┴─────────────────────┴───────────────┘
+   sidebar        editor grid: 2 columns,
+                  left column split into 2 rows
+```
+
+Both terminals are **editor-area** terminals, not the panel: VS Code's bottom panel
+is a single dock and cannot be both under-the-editor and a right column at once. The
+extension builds an editor grid with `vscode.setEditorLayout` (two columns, the left
+split into two rows) and drops a terminal into each of the lower-left and right
+groups. The center terminal is `dev-shell` (session `<dir>`); the right is
+`dev-shell --suffix cc` (session `<dir>-cc`), a **ready shell** — type `claude` when
+you want it. Set `dotfilesWorkbench.claudeAutostart` to launch it automatically.
+
+It is the repo's one coded extension — plain CommonJS, no build step, gated by
+`node --check`. Settings:
+
+| Setting | Default | Effect |
+|---------|---------|--------|
+| `dotfilesWorkbench.autoLayout` | `true` | build on folder open |
+| `dotfilesWorkbench.claudeAutostart` | `false` | run `claude` in the right terminal |
+| `dotfilesWorkbench.shellPath` | `""` | override `~/.local/bin/dev-shell` |
+
+**Idempotent.** Auto-build is skipped when a restored window
+(`enablePersistentSessions`) already has editor-area terminals, so it never stacks a
+second layout on top of the first. **`Ctrl+Alt+D`** (or *Dotfiles: Build Dev Layout*)
+rebuilds it on demand — useful the first time you open a brand-new repo, or after
+tearing the layout down.
+
+> Installing or reloading the extension while a project window is open builds the
+> layout in that live window. That is the feature, but it means a running window
+> rearranges the moment the extension loads.
 
 ### Using it as `$EDITOR`
 

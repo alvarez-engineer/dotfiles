@@ -66,6 +66,7 @@ targets=(
   "$xdg/opencode/themes/muted-ink.json"
   "$vscode_user/settings.json"
   "$vscode_ext/dotfiles.muted-ink-1.0.0"
+  "$vscode_ext/dotfiles.workbench-1.0.0"
   "$HOME/.local/bin/code"
   "$HOME/.local/bin/dev-shell"
   "$HOME/.claude/statusline.sh"
@@ -105,11 +106,14 @@ for t in "${targets[@]}"; do
   fi
 done
 
-if [[ -f "$vscode_ext/extensions.json" ]] &&
-  grep -q '"dotfiles.muted-ink"' "$vscode_ext/extensions.json" 2>/dev/null; then
-  echo "Note: the Muted Ink theme is still registered with VS Code."
-  echo "      Remove it with: code --uninstall-extension dotfiles.muted-ink"
-fi
+# The symlinks above are gone, but VS Code still has these ids in extensions.json.
+for id in dotfiles.muted-ink dotfiles.workbench; do
+  if [[ -f "$vscode_ext/extensions.json" ]] &&
+    grep -q "\"$id\"" "$vscode_ext/extensions.json" 2>/dev/null; then
+    echo "Note: $id is still registered with VS Code."
+    echo "      Remove it with: code --uninstall-extension $id"
+  fi
+done
 
 # ~/.claude/settings.json is seeded, not symlinked, so the loop above never sees
 # it. It holds machine state we did not put there; leave it alone and say so.
