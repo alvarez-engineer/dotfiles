@@ -126,5 +126,17 @@
   // ever swallowed, "terminal.integrated.sendKeybindingsToShell": true sends every
   // chord to the shell instead -- at the cost of VS Code's own shortcuts while the
   // terminal has focus.
-  "terminal.integrated.allowChords": true
+  "terminal.integrated.allowChords": true,
+
+  // --- Workbench layout (dotfiles-workbench extension) -------------------------
+  // The right-hand terminal is a ready shell; type `claude` yourself. Set here
+  // explicitly rather than relying on the extension's manifest default, because
+  // VS Code caches an extension's contributed defaults at registration and a
+  // window reload does not refresh them -- a default flipped in package.json
+  // would not take effect until the extension is reinstalled. An explicit user
+  // setting is read live and always wins. Flip to true to auto-launch claude.
+  "dotfilesWorkbench.claudeAutostart": false,
+
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "chat.agent.enabled": false
 }
