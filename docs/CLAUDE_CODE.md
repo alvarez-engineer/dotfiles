@@ -55,13 +55,34 @@ exactly two terminals and wrong everywhere else.
 Claude Code passes session JSON on stdin and renders one line of stdout:
 
 ```text
-~/projects/dotfiles on main · Opus 4.8
+~/projects/dotfiles on main ● · Opus 4.8 · ▓▓▓▓▓▓▓░░░ 68% ctx · $0.42 · +156/-42 · 12m
 ```
 
-Directory in cyan, git branch in yellow, model in blue, separators dim. It reads
-`workspace.current_dir` and `model.display_name`, degrades to `$PWD` when the JSON
-is unparseable, and never exits non-zero — a status line must not be able to break
-the prompt.
+Left to right, each segment omitting itself when its data is missing:
+
+| Segment | Source | Color |
+|---------|--------|-------|
+| Directory | `workspace.current_dir` (`$HOME`→`~`) | cyan |
+| Git branch + state | `git` in that dir: branch, `●` when dirty, `↑n`/`↓n` vs upstream | yellow / red / dim |
+| Model | `model.display_name` | blue |
+| **Context bar** | newest `message.usage` in `transcript_path` over the window (200k, or 1M when `exceeds_200k_tokens`) | green <60%, yellow <85%, red above |
+| Session cost | `cost.total_cost_usd` | magenta |
+| Lines changed | `cost.total_lines_added` / `_removed` | green / red |
+| Duration | `cost.total_duration_ms` | dim |
+
+The context bar is the one field Claude Code does **not** hand over directly: the
+script reads the last ~200 KB of the transcript JSONL, scans backward for the most
+recent assistant message's token `usage`, and sizes the bar from that. Any failure
+(no transcript, unparseable line) just drops the segment.
+
+It degrades to `$PWD` when the JSON is unparseable, falls back to a dir/branch/model
+line when `python3` is unavailable, and never exits non-zero — a status line must
+not be able to break the prompt.
+
+**Glyphs are ASCII by default.** A pipe cannot detect the rendering font, and the
+bundled JetBrains Mono carries no Nerd Font icons (they would render as tofu boxes),
+so powerline glyphs are opt-in — `export DOTFILES_STATUSLINE_GLYPHS=nerd` swaps the
+`·`/`on` separators for powerline glyphs; anything else stays ASCII.
 
 `statusLine.command` gets an **absolute** path baked in at seed time. A leading `~`
 is not reliably expanded there, and the seeded file is a copy, so rewriting it is
