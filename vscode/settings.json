@@ -104,9 +104,15 @@
   },
   "terminal.integrated.defaultProfile.osx": "dev (tmux)",
 
-  // tmux owns session lifetime now. VS Code's own restore would fight it,
-  // reattaching a dead pane on top of a live tmux server.
-  "terminal.integrated.enablePersistentSessions": false,
+  // On. When VS Code restores a terminal after a restart, it re-runs the profile
+  // -- dev-shell -- which `has-session` detects and *attaches* to. The tmux server
+  // is a host daemon (started via host-spawn, outside VS Code's pty), so it
+  // outlives the editor: quit VS Code, reopen, and the restored terminal reattaches
+  // the same session with every pane and process still running. Attach is
+  // non-destructive and dev-shell only splits on first create, so restore never
+  // duplicates panes. (This was briefly false, on the wrong theory that restore
+  // would fight tmux; it reconnects to it.)
+  "terminal.integrated.enablePersistentSessions": true,
 
   // Terminals to the right, not the bottom: the editor and Explorer keep the
   // left, terminals sit beside them full-height. Split the panel to get Claude

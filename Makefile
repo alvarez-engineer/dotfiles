@@ -63,6 +63,9 @@ SH_FILES := $(sort install.sh lib/common.sh $(wildcard */install.sh) $(wildcard 
 
 ZSH_FILES := shell/zshrc shell/prompt/zsh_prompt.zsh
 
+# Plain-JS VS Code extensions (no build step). `node --check` is their `bash -n`.
+JS_FILES := $(wildcard vscode/extensions/*/*.js)
+
 # Every leg of this gate must be able to FAIL the build. Three ways it silently
 # could not, all fixed here and worth not reintroducing:
 #   - `bash -n a b c` parses only `a`; the rest become positional args.
@@ -87,6 +90,10 @@ check:
 		echo "luacheck nvim/"; \
 		luacheck --no-max-line-length -q nvim/ || exit 1; \
 	else echo "luacheck not found; skipping lua lint"; fi
+	@if command -v node >/dev/null 2>&1; then \
+		if [ -n "$(JS_FILES)" ]; then echo "node --check"; \
+			for f in $(JS_FILES); do node --check "$$f" || exit 1; done; fi \
+	else echo "node not found; skipping JS syntax check"; fi
 
 tree:
 	find . -path ./.git -prune -o -type f -print | sort

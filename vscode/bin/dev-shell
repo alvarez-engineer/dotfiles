@@ -9,33 +9,42 @@
 #    integrated terminal cannot run any of the tools this repo installs. Hop to
 #    the host first, via whichever spawn helper the runtime provides.
 #
-# 2. Attach (or create) one tmux session per project, named for the directory.
-#    The same session is reachable from Ghostty with `tmux attach -t <name>`, so
-#    the editor's terminal and the standalone terminal are the *same* session:
-#    closing VS Code does not kill the shell, and switching windows costs no
-#    state. That, not the window count, is what makes the setup feel like one
-#    place.
+# 2. Attach (or create) one tmux session, named for the directory (plus an
+#    optional --suffix). The same session is reachable from Ghostty with
+#    `tmux attach -t <name>`, so the editor's terminal and a standalone terminal
+#    are the *same* session: closing VS Code does not kill the shell.
 #
-# Set DOTFILES_DEV_SHELL_NO_TMUX=1 for a plain login shell.
+# One pane per terminal, deliberately. The workbench layout is built by VS Code
+# (the dotfiles-workbench extension lays out editor + terminals), so a terminal
+# here is a single shell; distinct terminals ask for distinct sessions via
+# --suffix. Earlier this script split its own pane -- that is now VS Code's job.
+#
+# Usage: dev-shell [--suffix NAME] [--run "CMD"]
+#   --suffix NAME   session becomes <dir>-NAME (a second, independent terminal)
+#   --run "CMD"     run CMD once, only when the session is first created
+#   DOTFILES_DEV_SHELL_NO_TMUX=1   skip tmux entirely, plain login shell
 
 set -euo pipefail
 
 have() { command -v "$1" >/dev/null 2>&1; }
 
 # /.flatpak-info exists only inside a flatpak sandbox. Re-exec this same script
-# on the host; there the file is absent, so this branch does not recurse.
-#
-# Both helpers preserve the working directory, which the session name depends on.
-# Neither forwards the environment: host-spawn passes *only* $TERM unless told
-# otherwise, so every variable that matters has to be named explicitly. Getting
-# this wrong is silent -- the var is simply empty on the far side.
+# on the host; there the file is absent, so this branch does not recurse. Args
+# ("$@") survive the re-exec for free; the *environment* does not -- host-spawn
+# forwards only $TERM unless told otherwise, and a dropped var fails silently.
+# CLAUDE_CODE_SSE_PORT is forwarded so a claude started here still finds the VS
+# Code IDE server (diffs open as editor tabs); without it that auto-connect is
+# silently lost when we cross to the host.
 if [[ -f /.flatpak-info ]]; then
+  fwd="TERM,DOTFILES_DEV_SHELL_NO_TMUX,CLAUDE_CODE_SSE_PORT,CLAUDE_CODE_ENTRYPOINT"
   if have host-spawn; then
-    exec host-spawn -env TERM,DOTFILES_DEV_SHELL_NO_TMUX "$0" "$@"
+    exec host-spawn -env "$fwd" "$0" "$@"
   elif have flatpak-spawn; then
     exec flatpak-spawn --host \
       --env=TERM="${TERM:-xterm-256color}" \
       --env=DOTFILES_DEV_SHELL_NO_TMUX="${DOTFILES_DEV_SHELL_NO_TMUX:-}" \
+      --env=CLAUDE_CODE_SSE_PORT="${CLAUDE_CODE_SSE_PORT:-}" \
+      --env=CLAUDE_CODE_ENTRYPOINT="${CLAUDE_CODE_ENTRYPOINT:-}" \
       "$0" "$@"
   fi
   printf 'dev-shell: inside a flatpak sandbox with no host-spawn/flatpak-spawn.\n' >&2
@@ -43,16 +52,37 @@ if [[ -f /.flatpak-info ]]; then
   exec "${SHELL:-/bin/bash}" -l
 fi
 
+suffix=""
+run_cmd=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --suffix) suffix="${2:-}"; shift 2 ;;
+    --run)    run_cmd="${2:-}"; shift 2 ;;
+    --)       shift; break ;;
+    *)        shift ;;
+  esac
+done
+
 if [[ -n "${DOTFILES_DEV_SHELL_NO_TMUX:-}" ]] || ! have tmux; then
   exec "${SHELL:-/bin/bash}" -l
 fi
 
 # tmux rejects '.' and ':' in session names -- they are its window/pane
-# separators -- and an empty name is an error. Derive one from the directory.
+# separators -- and an empty name is an error. Derive one from the directory,
+# with an optional suffix for a second independent session (e.g. "<dir>-cc").
 session="$(basename -- "${PWD:-$HOME}")"
 session="${session//[.:]/_}"
 [[ -n "$session" ]] || session="dev"
+[[ -n "$suffix" ]] && session="${session}-${suffix//[.:]/_}"
 
-# -A: attach if it exists, create otherwise. Idempotent, so every new terminal
-# tab lands in the same session rather than spawning a pile of them.
-exec tmux new-session -A -s "$session"
+# Create on first use, attach thereafter. --run fires only on create, so
+# reattaching (a later terminal, or VS Code restoring the session) does not
+# relaunch the command. `=name` is tmux's exact-match on has-session/attach;
+# send-keys targets the bare session name (the `=` prefix is a session-only
+# qualifier that tmux rejects as a pane target).
+if ! tmux has-session -t "=$session" 2>/dev/null; then
+  tmux new-session -d -s "$session"
+  [[ -n "$run_cmd" ]] && tmux send-keys -t "$session" "$run_cmd" Enter
+fi
+
+exec tmux attach-session -t "=$session"
