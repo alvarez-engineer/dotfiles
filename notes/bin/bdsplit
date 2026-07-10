@@ -17,7 +17,9 @@ set -euo pipefail
 # as are already-checked "- [x]" items. Everything else stays in the dump.
 #
 # A routed dump moves to archive/<YYYY-MM>/, which is what makes re-running safe:
-# it is no longer in inbox/, so it cannot be routed twice. A dump with prose but
+# it is no longer in inbox/, so it cannot be routed twice. That also means every
+# file bdsplit reads is a file bdsplit archives, which is why an explicit FILE
+# argument must live in inbox/ — see the guard below. A dump with prose but
 # no markers is left in inbox/ untouched — routing is the "I'm finished" signal,
 # and an unfinished dump must stay where bdsplit will look at it again. The one
 # exception is a dump with nothing in it at all (see is_empty): there is no
@@ -35,13 +37,17 @@ Usage: bdsplit [OPTIONS] [FILE ...]
 
 Routes marked lines out of brain dumps into todo.md, questions.md, remember.md
 and optimizations.md, then archives each dump it routed. With no FILE, processes
-every *.md in $NOTES_DIR/inbox.
+every *.md in $NOTES_DIR/inbox. A FILE outside inbox/ is refused: routing
+archives the file it reads, so `bdsplit todo.md` would file your todo list away.
 
 Options:
   --dry-run    print what would be routed and moved, change nothing
   --commit     git commit the result in $NOTES_DIR
   --push       implies --commit, then git push
-  --keep       route but leave the dump in inbox/ (backlinks point at inbox/)
+  --keep       route but leave the dump in inbox/ (backlinks point at inbox/).
+               Archiving is what makes re-running safe, so a kept dump routes
+               again — and duplicates — on the next run. For a look before you
+               leap, use --dry-run.
   -h, --help   show this help
 
 Environment:
@@ -87,13 +93,45 @@ run() {
 [[ -d "$NOTES_DIR" ]] || { echo "bdsplit: no notes dir: $NOTES_DIR" >&2; exit 1; }
 
 inbox="$NOTES_DIR/inbox"
+[[ -d "$inbox" ]] || { echo "bdsplit: no inbox: $inbox" >&2; exit 1; }
+
+# resolve_dir DIR — absolute, symlink-free path. `cd -P && pwd` rather than
+# realpath(1) or `readlink -f`, neither of which is on a stock macOS.
+resolve_dir() { (cd -P -- "$1" 2>/dev/null && pwd); }
+
+inbox_real="$(resolve_dir "$inbox")" \
+  || { echo "bdsplit: cannot resolve inbox: $inbox" >&2; exit 1; }
 
 if [[ ${#files[@]} -eq 0 ]]; then
-  [[ -d "$inbox" ]] || { echo "bdsplit: no inbox: $inbox" >&2; exit 1; }
   # Nullglob so an empty inbox yields an empty array rather than a literal glob.
   shopt -s nullglob
   files=("$inbox"/*.md)
   shopt -u nullglob
+else
+  # Routing *archives the file it reads*, so an explicit FILE must be an inbox
+  # dump. Two ways that bites otherwise, both silent:
+  #
+  #   bdsplit todo.md         re-routes every "- [ ]" back into todo.md, then
+  #                           moves todo.md into archive/ — the standing list is
+  #                           gone. Harmless on a fresh todo.md (no items, no
+  #                           markers), so it only fires once you have something
+  #                           to lose. `bdsplit *.md` from $NOTES_DIR gets here.
+  #
+  #   bdsplit archive/…/x.md  appends x.md's items a second time, then dies on
+  #                           `mv: same file` — after the destinations are dirty.
+  #
+  # Compare resolved parent dirs, so a relative path, a trailing "./", or a
+  # symlinked $NOTES_DIR all land on the same answer.
+  for f in "${files[@]}"; do
+    [[ -e "$f" ]] || { echo "bdsplit: no such file: $f" >&2; exit 1; }
+    parent="$(resolve_dir "$(dirname -- "$f")")" \
+      || { echo "bdsplit: cannot resolve: $f" >&2; exit 1; }
+    if [[ "$parent" != "$inbox_real" ]]; then
+      echo "bdsplit: not an inbox dump: $f" >&2
+      echo "bdsplit: only files in $inbox can be routed (routing archives the file it reads)" >&2
+      exit 2
+    fi
+  done
 fi
 
 if [[ ${#files[@]} -eq 0 ]]; then
