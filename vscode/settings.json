@@ -23,11 +23,14 @@
   // nothing: an unresolvable family silently falls back through fontconfig, and
   // on this machine `fc-match "JetBrains Mono"` answers *Noto Sans* -- a
   // proportional font. Hence a real stack, ending in fonts that exist.
-  "editor.fontFamily": "'JetBrains Mono', 'Source Code Pro', 'Adwaita Mono', 'Liberation Mono', monospace",
+  // 'JetBrainsMono Nerd Font Mono' first: bootstrap installs it (a superset of
+  // JetBrains Mono with Powerline/icon glyphs), so the terminal's status-line
+  // glyph mode renders. Plain 'JetBrains Mono' stays next as the fallback.
+  "editor.fontFamily": "'JetBrainsMono Nerd Font Mono', 'JetBrains Mono', 'Source Code Pro', 'Adwaita Mono', 'Liberation Mono', monospace",
   "editor.fontSize": 14,
   "editor.fontLigatures": true,
   "editor.lineHeight": 1.6,
-  "terminal.integrated.fontFamily": "'JetBrains Mono', 'Source Code Pro', 'Adwaita Mono', monospace",
+  "terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font Mono', 'JetBrains Mono', 'Source Code Pro', 'Adwaita Mono', monospace",
   "terminal.integrated.fontSize": 14,
 
   // --- Minimal chrome --------------------------------------------------------

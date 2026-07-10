@@ -54,22 +54,36 @@ detect_os() {
   esac
 }
 
-# JetBrains Mono has to be installed system-wide even though ghostty/config.ghostty
-# names it and looks fine without it: Ghostty *embeds* the font, so the terminal
-# renders correctly on a machine where fontconfig has never heard of it. Nothing
-# else does. VS Code in particular resolves `editor.fontFamily` through fontconfig,
-# and `fc-match "JetBrains Mono"` answers *Noto Sans* -- proportional -- when the
-# font is missing, quietly un-monospacing the editor. So the terminal and the
-# editor drift apart while every config file claims they agree.
+# We install JetBrainsMono *Nerd Font* rather than plain JetBrains Mono. The Nerd
+# Font is a superset -- identical letterforms plus the Powerline/branch/icon glyphs
+# in the Private Use Area -- so it costs nothing for normal text and makes the
+# claude status line's opt-in glyph mode (DOTFILES_STATUSLINE_GLYPHS=nerd) render.
 #
-# Not fatal: vscode/settings.json falls back through Source Code Pro, and Ghostty
-# never needed it. Warn and carry on, as with eza/git-delta below.
-font_warn="JetBrains Mono not installed; ghostty embeds it but VS Code will fall back"
+# It matters for VS Code, not Ghostty. VS Code resolves `terminal.integrated.fontFamily`
+# through fontconfig, and `fc-match` answers *Noto Sans* -- proportional -- when the
+# family is missing, quietly un-monospacing the terminal and tofu-ing every glyph.
+# Ghostty needs nothing: it embeds JetBrains Mono and has a built-in Nerd Font
+# symbol fallback, so its glyphs render whether or not this install runs.
+#
+# The "Mono" variant ("JetBrainsMono Nerd Font Mono") forces every icon into a
+# single cell, so columns never shift -- the right choice for a terminal/editor.
+#
+# Not fatal: vscode/settings.json falls back through plain JetBrains Mono then
+# Source Code Pro, and Ghostty never needed it. Warn and carry on, as with
+# eza/git-delta below.
+font_warn="JetBrainsMono Nerd Font not installed; ghostty renders glyphs anyway, but VS Code will tofu them"
 
-# Upstream tag. v2.304 is byte-for-byte the release Fedora ships as
-# jetbrains-mono-fonts 2.304, so the user-local fallback below is not a downgrade.
-jbm_version="2.304"
-jbm_url="https://github.com/JetBrains/JetBrainsMono/releases/download/v${jbm_version}/JetBrainsMono-${jbm_version}.zip"
+# Pinned Nerd Fonts release. The per-font zip carries all weights/variants; we keep
+# only the four the editor actually uses.
+nf_version="3.4.0"
+nf_url="https://github.com/ryanoasis/nerd-fonts/releases/download/v${nf_version}/JetBrainsMono.zip"
+# The "Mono" variant's core weights (family: "JetBrainsMono Nerd Font Mono").
+nf_faces=(
+  JetBrainsMonoNerdFontMono-Regular.ttf
+  JetBrainsMonoNerdFontMono-Bold.ttf
+  JetBrainsMonoNerdFontMono-Italic.ttf
+  JetBrainsMonoNerdFontMono-BoldItalic.ttf
+)
 
 # Where a font can be dropped without root and still be found.
 user_font_dir() {
@@ -84,59 +98,61 @@ user_font_dir() {
 # error here -- fc-match always answers *something* -- so compare the answer.
 font_present() {
   have fc-match || return 1
-  fc-match "JetBrains Mono" family 2>/dev/null | grep -qi 'JetBrains Mono'
+  fc-match "JetBrainsMono Nerd Font Mono" family 2>/dev/null | grep -qi 'JetBrainsMono Nerd Font'
 }
 
-# Fetch the release and unpack the TTFs into the user font directory. No root.
+# Fetch the release and unpack the four faces into the user font directory. No root.
 install_font_user() {
   local dir tmp
-  dir="$(user_font_dir)/JetBrainsMono"
-  have curl  || { warn "curl not found; cannot fetch JetBrains Mono"; return 1; }
-  have unzip || { warn "unzip not found; cannot unpack JetBrains Mono"; return 1; }
+  dir="$(user_font_dir)/JetBrainsMonoNerd"
+  have curl  || { warn "curl not found; cannot fetch JetBrainsMono Nerd Font"; return 1; }
+  have unzip || { warn "unzip not found; cannot unpack JetBrainsMono Nerd Font"; return 1; }
 
-  log "fetching JetBrains Mono $jbm_version into $dir (no root required)"
+  log "fetching JetBrainsMono Nerd Font $nf_version into $dir (no root; ~124M download)"
   tmp="$(mktemp -d)"
-  if ! curl -sSL --fail --max-time 180 -o "$tmp/jbm.zip" "$jbm_url"; then
-    rm -rf "$tmp"; warn "download failed: $jbm_url"; return 1
+  if ! curl -sSL --fail --max-time 300 -o "$tmp/nf.zip" "$nf_url"; then
+    rm -rf "$tmp"; warn "download failed: $nf_url"; return 1
   fi
-  if ! unzip -qo "$tmp/jbm.zip" 'fonts/ttf/*.ttf' -d "$tmp/x"; then
-    rm -rf "$tmp"; warn "could not unpack the JetBrains Mono archive"; return 1
+  # Extract only the faces we keep; the full archive is ~96 TTFs.
+  if ! unzip -qo "$tmp/nf.zip" "${nf_faces[@]}" -d "$tmp/x"; then
+    rm -rf "$tmp"; warn "could not unpack the JetBrainsMono Nerd Font archive"; return 1
   fi
   mkdir -p "$dir"
-  cp "$tmp/x"/fonts/ttf/*.ttf "$dir/"
+  cp "$tmp/x"/*.ttf "$dir/"
   rm -rf "$tmp"
 
   # macOS has no fc-cache; CoreText picks up ~/Library/Fonts on its own.
   if have fc-cache; then fc-cache -f "$dir" >/dev/null 2>&1 || true; fi
-  log "installed JetBrains Mono to $dir"
+  log "installed JetBrainsMono Nerd Font to $dir"
   return 0
 }
 
-# install_jetbrains_mono [PACKAGED INSTALL COMMAND...]
+# install_nerd_font [PACKAGED INSTALL COMMAND...]
 #
-# Try the distro package first, and fall back to a user-local install when that
-# fails for *any* reason -- no sudo, no TTY to type a password into, package not
-# in the repo. Trust the packaged command's exit status rather than re-checking
-# with font_present(): macOS has no fontconfig, so font_present() is always false
-# there and would send a successful `brew install --cask` down the fallback path.
-install_jetbrains_mono() {
+# Try a packaged install first when one is given (only Homebrew reliably packages
+# the Nerd variant), and fall back to the rootless user-local fetch otherwise --
+# no sudo, no TTY to type a password into, package not in the repo. Trust the
+# packaged command's exit status rather than re-checking with font_present():
+# macOS has no fontconfig, so font_present() is always false there and would send a
+# successful `brew install --cask` down the fallback path.
+install_nerd_font() {
   if font_present; then
-    log "JetBrains Mono already installed"
+    log "JetBrainsMono Nerd Font already installed"
     return 0
   fi
 
   if [[ "$DOTFILES_DRY_RUN" == "true" ]]; then
     [[ $# -gt 0 ]] && printf 'DRY RUN: %s\n' "$*"
-    printf 'DRY RUN: on failure, fetch %s into %s\n' "$jbm_url" "$(user_font_dir)/JetBrainsMono"
+    printf 'DRY RUN: on failure, fetch %s into %s\n' "$nf_url" "$(user_font_dir)/JetBrainsMonoNerd"
     return 0
   fi
 
   if [[ $# -gt 0 ]] && "$@"; then
-    log "JetBrains Mono installed via the system package manager"
+    log "JetBrainsMono Nerd Font installed via the system package manager"
     return 0
   fi
 
-  warn "packaged install unavailable or failed; falling back to a user-local install"
+  [[ $# -gt 0 ]] && warn "packaged install unavailable or failed; falling back to a user-local install"
   install_font_user || warn "$font_warn"
 }
 
@@ -163,7 +179,9 @@ install_opencode() {
 bootstrap_fedora() {
   info "Fedora: installing tools via dnf"
   sudo_run dnf install -y neovim tmux fzf ripgrep bat eza git-delta zsh fd-find git
-  install_jetbrains_mono sudo_run dnf install -y jetbrains-mono-fonts
+  # The Nerd variant is not reliably in Fedora's repos; go straight to the
+  # rootless user-local fetch.
+  install_nerd_font
   install_starship
   install_opencode
   if [[ "$dev" == "true" ]]; then
@@ -180,7 +198,8 @@ bootstrap_debian() {
   # eza and git-delta are not in older apt repos; try, but don't fail the run.
   sudo_run apt-get install -y eza  || warn "eza not packaged here; install manually if wanted"
   sudo_run apt-get install -y git-delta || warn "git-delta not in apt; see delta releases page"
-  install_jetbrains_mono sudo_run apt-get install -y fonts-jetbrains-mono
+  # Debian's fonts-jetbrains-mono is plain (no Nerd glyphs); fetch the Nerd build.
+  install_nerd_font
   warn "Debian names: 'bat' -> batcat, 'fd' -> fdfind (alias or symlink as desired)"
   install_starship
   install_opencode
@@ -196,7 +215,7 @@ bootstrap_macos() {
   have brew || die "Homebrew not found. Install it from https://brew.sh, then re-run."
   run brew install neovim tmux fzf ripgrep bat eza git-delta starship zsh fd git opencode
   run brew install --cask ghostty || warn "ghostty cask skipped (already installed?)"
-  install_jetbrains_mono run brew install --cask font-jetbrains-mono
+  install_nerd_font run brew install --cask font-jetbrains-mono-nerd-font
   if [[ "$dev" == "true" ]]; then
     info "dev linters"
     run brew install shellcheck luacheck
