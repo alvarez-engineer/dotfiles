@@ -66,5 +66,14 @@ export NOTES_DIR="${NOTES_DIR:-$HOME/notes}"
 # opencode CLI installs to ~/.opencode/bin; add it to PATH when present.
 [ -d "$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
 
+# Drop-in shell fragments for tools that live outside this repo — private repos,
+# work-only tooling, anything this repo should not name. Each such tool installs
+# its own $DOTFILES_LOCAL_D/<tool>.sh (PATH entry, aliases, completions); bashrc
+# and zshrc source every *.sh here, in lexical order, without knowing what any of
+# them are. This repo stays public and portable; nothing here is a shim for a
+# specific tool. The sourcing itself lives in the rc files, not this one, because
+# completion fragments must run after bash-completion / compinit.
+export DOTFILES_LOCAL_D="${DOTFILES_LOCAL_D:-${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/local.d}"
+
 # Less history / colored GCC diagnostics.
 export GCC_COLORS="error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01"

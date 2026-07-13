@@ -49,5 +49,16 @@ elif [ -r "$__dotfiles_shell/prompt/zsh_prompt.zsh" ]; then
   source "$__dotfiles_shell/prompt/zsh_prompt.zsh"
 fi
 
+# --- Drop-in fragments from tools outside this repo (see exports.sh) ---
+# Sourced here, not in exports.sh: a fragment may call compdef, which needs the
+# compinit above. The (N) qualifier is zsh's null-glob — without it an empty or
+# absent local.d aborts the loop with "no matches found".
+if [ -d "${DOTFILES_LOCAL_D:-}" ]; then
+  for __f in "$DOTFILES_LOCAL_D"/*.sh(N); do
+    [ -r "$__f" ] && source "$__f"
+  done
+  unset __f
+fi
+
 # --- Machine-local overrides (untracked) ---
 [ -r "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"

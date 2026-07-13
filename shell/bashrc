@@ -68,5 +68,16 @@ elif [ -r "$__dotfiles_shell/prompt/bash_prompt.sh" ]; then
   . "$__dotfiles_shell/prompt/bash_prompt.sh"
 fi
 
+# --- Drop-in fragments from tools outside this repo (see exports.sh) ---
+# Sourced here, not in exports.sh: a fragment may register completions, which
+# needs bash-completion (above) already loaded. An unmatched glob stays literal
+# in bash, so the -r test is what makes the empty/missing case a no-op.
+if [ -d "${DOTFILES_LOCAL_D:-}" ]; then
+  for __f in "$DOTFILES_LOCAL_D"/*.sh; do
+    [ -r "$__f" ] && . "$__f"
+  done
+  unset __f
+fi
+
 # --- Machine-local overrides (untracked) ---
 [ -r "$HOME/.bashrc.local" ] && . "$HOME/.bashrc.local"
