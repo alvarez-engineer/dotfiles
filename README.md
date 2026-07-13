@@ -105,6 +105,33 @@ make check           # syntax + lint gate (bash/zsh/shellcheck/luacheck)
 - **One palette everywhere**: `muted-ink` is defined once and re-expressed per
   tool. See [docs/THEMES.md](docs/THEMES.md).
 
+## Tools that live outside this repo
+
+Some tools are too big to be a dotfile (they have their own `bin/`, `lib/`,
+tests, releases) or too private to name in a public repo — work-only tooling, a
+private CLI. They should not be shimmed from here: a shim leaks the tool's name,
+hard-codes a directory layout no one else shares, and no-ops on every machine but
+one.
+
+Instead, this repo sources every `*.sh` it finds in `$DOTFILES_LOCAL_D`
+(default `~/.config/dotfiles/local.d`), in lexical order, without knowing what
+any of them are:
+
+```bash
+# ~/.config/dotfiles/local.d/mytool.sh — written by mytool's own installer
+export PATH="$HOME/src/mytool/bin:$PATH"
+alias mt='mytool'
+[ -n "${BASH_VERSION:-}" ] && . "$HOME/src/mytool/completions/mytool.bash"
+```
+
+The tool's own `install.sh` writes that file; this repo never learns it exists.
+Fragments are sourced from `shell/bashrc` and `shell/zshrc` **after**
+bash-completion and `compinit`, so a fragment can register completions. An
+absent or empty `local.d` is a no-op, which is the case on a fresh clone.
+
+Machine-specific tweaks that belong to *you* rather than to a tool still go in
+`~/.bashrc.local` / `~/.zshrc.local`, sourced last.
+
 ## First run on a new machine
 
 ```bash
