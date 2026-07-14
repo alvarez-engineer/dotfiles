@@ -95,6 +95,19 @@ Claude Code at all.
    *created* — so reattaching (a later terminal, or VS Code restoring the session)
    never relaunches it.
 
+The **first** terminal for a directory creates that session and attaches to it.
+Every terminal after it joins a **grouped session** instead (`tmux new-session -t
+<dir>`, auto-named `<dir>-1`, `<dir>-2`, …): same window list, but its own
+current-window pointer. This is the difference between a second *client* and a
+second *session*. Two clients of one session mirror each other — same active
+window, shared keystrokes and output — which is why opening a new terminal in VS
+Code used to echo whatever the first one was already running. A grouped session
+shares the windows without the mirroring, so each terminal can sit on a different
+window. The clone sets `destroy-unattached on`, so closing that terminal reaps it
+while the base session — and the shells running in it — survive. Use `--suffix`
+when you want a terminal with a *wholly separate* window list rather than another
+view onto the same one.
+
 One pane per terminal, on purpose: the workbench layout (below) is what places two
 terminals, so `dev-shell` no longer splits its own pane. It also forwards
 `CLAUDE_CODE_SSE_PORT` across `host-spawn`, so a `claude` started on the host still

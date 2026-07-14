@@ -14,10 +14,16 @@
 #    `tmux attach -t <name>`, so the editor's terminal and a standalone terminal
 #    are the *same* session: closing VS Code does not kill the shell.
 #
+#    The first terminal creates and attaches the session. Every terminal after it
+#    joins as a *grouped* session -- shared windows, its own current-window
+#    pointer -- because two plain clients of one session mirror each other, which
+#    made a new VS Code terminal echo whatever the first one was running.
+#
 # One pane per terminal, deliberately. The workbench layout is built by VS Code
 # (the dotfiles-workbench extension lays out editor + terminals), so a terminal
-# here is a single shell; distinct terminals ask for distinct sessions via
-# --suffix. Earlier this script split its own pane -- that is now VS Code's job.
+# here is a single shell; a terminal that wants a wholly separate window list
+# asks for its own session via --suffix. Earlier this script split its own pane
+# -- that is now VS Code's job.
 #
 # Usage: dev-shell [--suffix NAME] [--run "CMD"]
 #   --suffix NAME   session becomes <dir>-NAME (a second, independent terminal)
@@ -75,14 +81,25 @@ session="${session//[.:]/_}"
 [[ -n "$session" ]] || session="dev"
 [[ -n "$suffix" ]] && session="${session}-${suffix//[.:]/_}"
 
-# Create on first use, attach thereafter. --run fires only on create, so
-# reattaching (a later terminal, or VS Code restoring the session) does not
-# relaunch the command. `=name` is tmux's exact-match on has-session/attach;
-# send-keys targets the bare session name (the `=` prefix is a session-only
-# qualifier that tmux rejects as a pane target).
+# Create on first use. --run fires only on create, so a later terminal (or VS
+# Code restoring the session) does not relaunch the command. `=name` is tmux's
+# exact-match on has-session/attach; send-keys targets the bare session name
+# (the `=` prefix is a session-only qualifier that tmux rejects as a pane
+# target).
 if ! tmux has-session -t "=$session" 2>/dev/null; then
   tmux new-session -d -s "$session"
   [[ -n "$run_cmd" ]] && tmux send-keys -t "$session" "$run_cmd" Enter
+  exec tmux attach-session -t "=$session"
 fi
 
-exec tmux attach-session -t "=$session"
+# The session already exists, so something is (or was) attached to it. A plain
+# `attach-session` would make this terminal a second *client* of that session --
+# and tmux mirrors clients of one session: same active window, shared keystrokes
+# and output. That is why a new VS Code terminal used to echo the first one.
+#
+# Join as a grouped session instead (`new-session -t <existing>`): it shares the
+# base session's window list but keeps its own current-window pointer, so the
+# two terminals can sit on different windows without dragging each other along.
+# tmux auto-names the clone (<dir>-1, <dir>-2, ...). destroy-unattached reaps it
+# when this terminal closes; the base session -- and the shells in it -- survive.
+exec tmux new-session -t "=$session" \; set-option destroy-unattached on
