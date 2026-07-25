@@ -223,7 +223,7 @@ command center, the layout control, the per-editor action buttons. The activity
 bar moves to the top, where it costs a row instead of a column. Tabs render flat,
 with the active one marked by a single top rule in the accent color.
 
-Two settings are worth calling out:
+Three settings are worth calling out:
 
 - **`editor.fontFamily` is a real stack, not just `JetBrains Mono`.** Ghostty
   *bundles* that font, so `font-family = JetBrains Mono` works there even when it
@@ -234,6 +234,18 @@ Two settings are worth calling out:
 
 - **`editor.formatOnSave` is off on purpose.** Formatting is a per-project
   decision; a global default rewrites files in repos that never asked for it.
+
+- **`.md` files open rendered, not as source.**
+  `workbench.editorAssociations` binds `*.md` to
+  `vscode.markdown.preview.editor`, so every Markdown file — opened from the
+  Explorer, quick-open, a search result, or a link — comes up as the rendered
+  preview. Note this is a different "preview" from
+  `workbench.editor.enablePreview` (which is about italic throwaway tabs and
+  stays off). The preview editor is read-only, so reading is one click and
+  editing is two: **View: Reopen Editor With…** (`ctrl+shift+p`) → *Text
+  Editor*, or right-click in the Explorer → *Open With* → *Text Editor*. The
+  pencil icon in the preview's toolbar does the same. Drop the
+  `workbench.editorAssociations` key to go back to source-first.
 
 ## Theme
 

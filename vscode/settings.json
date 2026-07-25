@@ -80,6 +80,21 @@
   // formatOnSave rewrites files in repos that never asked for it.
   "editor.formatOnSave": false,
 
+  // --- Markdown --------------------------------------------------------------
+  // Open .md in the rendered preview instead of the source. Not the same
+  // "preview" as workbench.editor.enablePreview above (that one is about italic
+  // throwaway tabs); this binds the *editor type* for the glob, so every .md --
+  // from the Explorer, quick-open, a search result, a link -- renders.
+  //
+  // vscode.markdown.preview.editor is read-only, so this is a trade: reading is
+  // one click, editing is two. To edit, reopen the file as text with
+  // "View: Reopen Editor With..." (ctrl+shift+p) and pick Text Editor, or
+  // right-click in the Explorer -> Open With -> Text Editor. The preview's own
+  // pencil icon does the same thing. Delete this key to go back to source-first.
+  "workbench.editorAssociations": {
+    "*.md": "vscode.markdown.preview.editor"
+  },
+
   // --- Terminal --------------------------------------------------------------
   // These mirror ghostty/config.ghostty, so the integrated terminal behaves like
   // the one outside the window: `cursor-style = block`, `cursor-style-blink =
