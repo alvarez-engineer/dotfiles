@@ -34,6 +34,11 @@ if [[ -e "$settings_dest" ]]; then
   if ! grep -q '"statusLine"' "$settings_dest" 2>/dev/null; then
     log "hint: add the status line -- see $src/settings.json"
   fi
+  # The seed above only reaches a machine that has no settings.json yet, so on
+  # an existing machine this hint is the only thing that surfaces the default.
+  if ! grep -q '"defaultMode"' "$settings_dest" 2>/dev/null; then
+    log "hint: set \"permissions\": {\"defaultMode\": \"auto\"} to open in auto mode"
+  fi
 else
   log "seed: $settings_dest"
   if [[ "$DOTFILES_DRY_RUN" == "true" ]]; then
