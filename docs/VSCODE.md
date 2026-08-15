@@ -174,7 +174,19 @@ It is the repo's one coded extension — plain CommonJS, no build step, gated by
 (`enablePersistentSessions`) already has editor-area terminals, so it never stacks a
 second layout on top of the first. **`Ctrl+Alt+D`** (or *Dotfiles: Build Dev Layout*)
 rebuilds it on demand — useful the first time you open a brand-new repo, or after
-tearing the layout down.
+tearing the layout down. A rebuild **replaces**: it disposes the existing `shell`
+and `claude` terminals before laying out fresh ones, so invoking it twice does not
+leave you with four. Disposing them is safe — the tmux sessions are host daemons,
+so the new terminals reattach the same shells.
+
+That idempotency check matches on the terminal **name**, and it has to. The obvious
+test — "was this terminal created with a `{ viewColumn }` location?" — silently fails
+for restored terminals, which is what made every window open stack a second `shell`
+and a second `claude`. A window reload restarts the extension host with an empty
+terminal list, so restored terminals arrive via `$acceptTerminalOpened`, which
+rebuilds `creationOptions` from the persisted shell launch config as
+`{ name, shellPath, shellArgs, cwd, env, hideFromUser, … }` — **with no `location`
+key at all**. `name` survives that round-trip; `location` does not.
 
 > Installing or reloading the extension while a project window is open builds the
 > layout in that live window. That is the feature, but it means a running window

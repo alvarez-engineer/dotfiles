@@ -29,18 +29,49 @@ function shellPath() {
   return override || path.join(os.homedir(), ".local", "bin", "dev-shell");
 }
 
+// The terminals this extension owns. Identity is the *name*, because that is
+// the only thing that survives a restore intact -- see layoutPresent().
+const MANAGED = ["shell", "claude"];
+
+function managedTerminals() {
+  return vscode.window.terminals.filter((t) => MANAGED.includes(t.name));
+}
+
 // True once the layout exists. A restored window (enablePersistentSessions)
-// recreates the editor-area terminals itself, so this keeps auto-build from
+// revives the editor-area terminals itself, so this keeps auto-build from
 // stacking a second set on top of them.
+//
+// Matching on creationOptions.location alone is not enough, and that was this
+// extension's duplicate-layout bug. A terminal *we* create carries the
+// `{ viewColumn }` object we passed. A *revived* one does not: a window reload
+// restarts the extension host with an empty terminal list, so every restored
+// terminal arrives through `$acceptTerminalOpened`, which rebuilds
+// creationOptions from the persisted shellLaunchConfig as
+// `{ name, shellPath, shellArgs, cwd, env, hideFromUser, ... }` -- with **no
+// `location` key at all**. So `creationOptions.location` was undefined for
+// exactly the terminals this check exists to find, the guard returned false,
+// and every window open added a second `shell` and a second `claude` on top of
+// the restored pair. `name` does survive that round-trip, so match on it first;
+// keep the location test as a fallback for a terminal renamed by its shell.
 function layoutPresent() {
   return vscode.window.terminals.some((t) => {
+    if (MANAGED.includes(t.name)) return true;
     const loc = t.creationOptions && t.creationOptions.location;
-    return loc && typeof loc === "object" && "viewColumn" in loc;
+    return !!loc && typeof loc === "object" && "viewColumn" in loc;
   });
 }
 
-async function buildLayout() {
+// replace=true tears the managed terminals down first. Only the explicit
+// Ctrl+Alt+D rebuild passes it: "rebuild" has to mean *replace*, or invoking it
+// on a window that already has a layout stacks a second one -- the same way
+// installing or reloading the extension into a live window used to. Disposing
+// is safe because the tmux session lives on the host and outlives the terminal;
+// a grouped clone is reaped by its own destroy-unattached, the base session and
+// the shells in it survive, and the fresh terminal reattaches.
+async function buildLayout({ replace = false } = {}) {
   const shell = shellPath();
+
+  if (replace) for (const t of managedTerminals()) t.dispose();
 
   await vscode.commands.executeCommand("workbench.view.explorer");
 
@@ -80,7 +111,7 @@ async function buildLayout() {
 function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand("dotfilesWorkbench.buildLayout", () =>
-      buildLayout().catch((e) =>
+      buildLayout({ replace: true }).catch((e) =>
         vscode.window.showErrorMessage(`Dotfiles layout: ${e}`)
       )
     )
