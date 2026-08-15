@@ -89,11 +89,31 @@ Claude Code at all.
    does not recurse.
 2. Attaches — or creates — **one tmux session**, named for the working directory
    (with `.` and `:` replaced, which tmux forbids in session names), plus an
-   optional `--suffix` — the workbench's Claude column uses `<dir>-cc` so it is an
-   independent session, not a mirror of the main one.
-3. Runs a one-off command with `--run "CMD"`, but only when the session is first
-   *created* — so reattaching (a later terminal, or VS Code restoring the session)
-   never relaunches it.
+   optional `--suffix` for a wholly separate session.
+3. Attaches a named **window** inside that session with `--window NAME`, creating
+   it if absent, optionally starting it in `--dir PATH` (relative paths resolve
+   against the terminal's cwd — the workspace root). The workbench uses this for
+   both of its terminals: `--window shell` and `--window claude`.
+4. Runs a one-off command with `--run "CMD"`, but only when the call actually
+   *creates* what it targets — the session, or with `--window`, the window. A
+   later terminal, or VS Code restoring one, never relaunches it.
+
+### `--window` or `--suffix`: one session or two
+
+Both give a terminal its own place to stand; they differ in what is shared.
+
+| | `--window` (one session, many windows) | `--suffix` (separate sessions) |
+|---|---|---|
+| Ghostty reach | `tmux attach -t <dir>` reaches **every** terminal | must know the `<dir>-NAME` session exists |
+| Switching | one prefix key (`C-a n`, `C-a w`) from either terminal | detach/reattach, or the session switcher |
+| `tmux ls` | one entry per project | one entry per terminal per project |
+| Isolation | shared window list — a terminal *can* navigate onto another's window | hard: the window lists cannot see each other |
+| Teardown | killing the session takes both | kill one without touching the other |
+
+The workbench uses `--window` because the Ghostty reachability is worth more than
+the isolation: one `tmux attach -t <dir>` picks up the editor's shell *and* its
+Claude column. Reach for `--suffix` when work genuinely should not share a window
+list with the project.
 
 The **first** terminal for a directory creates that session and attaches to it.
 Every terminal after it joins a **grouped session** instead (`tmux new-session -t
@@ -104,9 +124,13 @@ window, shared keystrokes and output — which is why opening a new terminal in 
 Code used to echo whatever the first one was already running. A grouped session
 shares the windows without the mirroring, so each terminal can sit on a different
 window. The clone sets `destroy-unattached on`, so closing that terminal reaps it
-while the base session — and the shells running in it — survive. Use `--suffix`
-when you want a terminal with a *wholly separate* window list rather than another
-view onto the same one.
+while the base session — and the shells running in it — survive.
+
+That independent current-window pointer is what makes `--window` usable: each
+terminal selects its own window on attach and leaves every other client where it
+was. Creating a window uses `new-window -d` for the same reason — without `-d`,
+tmux moves the *base* session's current window and drags whichever terminal is
+attached to the base along with it.
 
 One pane per terminal, on purpose: the workbench layout (below) is what places two
 terminals, so `dev-shell` no longer splits its own pane. It also forwards
@@ -146,20 +170,26 @@ you open it:
 ```text
 ┌──────────┬─────────────────────┬───────────────┐
 │ Explorer │  file / git diff    │    claude     │
-│          │─────────────────────│  (ready shell)│
-│          │  terminal           │               │
+│          │─────────────────────│               │
+│          │  shell              │               │
 └──────────┴─────────────────────┴───────────────┘
-   sidebar        editor grid: 2 columns,
-                  left column split into 2 rows
+   sidebar        editor grid: 2 columns,      one tmux session (<dir>),
+                  left column split into 2 rows    windows: shell + claude
 ```
 
 Both terminals are **editor-area** terminals, not the panel: VS Code's bottom panel
 is a single dock and cannot be both under-the-editor and a right column at once. The
 extension builds an editor grid with `vscode.setEditorLayout` (two columns, the left
 split into two rows) and drops a terminal into each of the lower-left and right
-groups. The center terminal is `dev-shell` (session `<dir>`); the right is
-`dev-shell --suffix cc` (session `<dir>-cc`), a **ready shell** — type `claude` when
-you want it. Set `dotfilesWorkbench.claudeAutostart` to launch it automatically.
+groups.
+
+Both run `dev-shell` against **one session** — the centre is `--window shell`, the
+right is `--window claude` — so `tmux attach -t <dir>` from Ghostty picks up both.
+The Claude column is a ready shell by default; set `dotfilesWorkbench.claudeAutostart`
+to launch a command in it when its window is first created, `claudeCommand` to choose
+that command (`claude --model claude-opus-4-8` to pin a model), and `claudeDir` to
+start it in a subdirectory of the workspace — so you can open a parent folder of
+several repos and still land Claude in the one you actually work in.
 
 It is the repo's one coded extension — plain CommonJS, no build step, gated by
 `node --check`. Settings:
@@ -167,8 +197,16 @@ It is the repo's one coded extension — plain CommonJS, no build step, gated by
 | Setting | Default | Effect |
 |---------|---------|--------|
 | `dotfilesWorkbench.autoLayout` | `true` | build on folder open |
-| `dotfilesWorkbench.claudeAutostart` | `false` | run `claude` in the right terminal |
+| `dotfilesWorkbench.claudeAutostart` | `false` | run `claudeCommand` when the claude window is first created |
+| `dotfilesWorkbench.claudeCommand` | `"claude"` | what `claudeAutostart` runs — add flags to pin a model |
+| `dotfilesWorkbench.claudeDir` | `""` | start the claude window here, relative to the workspace root |
 | `dotfilesWorkbench.shellPath` | `""` | override `~/.local/bin/dev-shell` |
+
+`claudeDir` falls back to the workspace root when the directory does not exist, so
+a stale value degrades to the old behavior rather than breaking the terminal. It is
+machine-specific by nature — if a second project needs a different value, move it
+(and `claudeCommand`) into that workspace's `.vscode/settings.json`, which wins over
+the user settings this repo manages.
 
 **Idempotent.** Auto-build is skipped when a restored window
 (`enablePersistentSessions`) already has editor-area terminals, so it never stacks a

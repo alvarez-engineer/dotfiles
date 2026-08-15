@@ -21,13 +21,26 @@
 #
 # One pane per terminal, deliberately. The workbench layout is built by VS Code
 # (the dotfiles-workbench extension lays out editor + terminals), so a terminal
-# here is a single shell; a terminal that wants a wholly separate window list
-# asks for its own session via --suffix. Earlier this script split its own pane
-# -- that is now VS Code's job.
+# here is a single shell. Earlier this script split its own pane -- that is now
+# VS Code's job.
 #
-# Usage: dev-shell [--suffix NAME] [--run "CMD"]
-#   --suffix NAME   session becomes <dir>-NAME (a second, independent terminal)
-#   --run "CMD"     run CMD once, only when the session is first created
+# Two ways to give a terminal its own place to stand, and they are not the same:
+#
+#   --window NAME   a named window *inside* the project's session. Shared window
+#                   list, own current-window pointer -- so `tmux attach` from
+#                   Ghostty sees every terminal's work, and switching windows
+#                   reaches all of it. This is what the workbench uses.
+#   --suffix NAME   a wholly separate session, <dir>-NAME, with its own window
+#                   list. Use it when the work genuinely should not share a
+#                   window list with the project.
+#
+# Usage: dev-shell [--window NAME] [--dir PATH] [--suffix NAME] [--run "CMD"]
+#   --window NAME   attach the named window, creating it if absent
+#   --dir PATH      start directory for a window this call creates; relative
+#                   paths resolve against the terminal's cwd (the workspace root)
+#   --suffix NAME   session becomes <dir>-NAME (a second, independent session)
+#   --run "CMD"     run CMD once, only when this call creates the session (or,
+#                   with --window, the window) -- never on a reattach
 #   DOTFILES_DEV_SHELL_NO_TMUX=1   skip tmux entirely, plain login shell
 
 set -euo pipefail
@@ -60,14 +73,19 @@ fi
 
 suffix=""
 run_cmd=""
+window=""
+dir=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --suffix) suffix="${2:-}"; shift 2 ;;
     --run)    run_cmd="${2:-}"; shift 2 ;;
+    --window) window="${2:-}"; shift 2 ;;
+    --dir)    dir="${2:-}"; shift 2 ;;
     --)       shift; break ;;
     *)        shift ;;
   esac
 done
+window="${window//[.:]/_}"
 
 if [[ -n "${DOTFILES_DEV_SHELL_NO_TMUX:-}" ]] || ! have tmux; then
   exec "${SHELL:-/bin/bash}" -l
@@ -81,15 +99,51 @@ session="${session//[.:]/_}"
 [[ -n "$session" ]] || session="dev"
 [[ -n "$suffix" ]] && session="${session}-${suffix//[.:]/_}"
 
-# Create on first use. --run fires only on create, so a later terminal (or VS
-# Code restoring the session) does not relaunch the command. `=name` is tmux's
-# exact-match on has-session/attach; send-keys targets the bare session name
+# Where a window this invocation *creates* should start. --dir is taken relative
+# to the terminal's own cwd (the workspace root, as VS Code sets it), so a
+# workbench setting can say "qhapaq-nan" rather than an absolute path that only
+# works on one machine. tmux errors out on a `-c` directory that does not exist,
+# so fall back rather than fail the terminal.
+start_dir="$PWD"
+if [[ -n "$dir" ]]; then
+  case "$dir" in
+    /*) start_dir="$dir" ;;
+    *)  start_dir="$PWD/$dir" ;;
+  esac
+  [[ -d "$start_dir" ]] || start_dir="$PWD"
+fi
+
+# --run fires only when this invocation *creates* the thing it targets -- the
+# session, or (with --window) the window -- so a later terminal, or VS Code
+# restoring one, never relaunches the command. `=name` is tmux's exact-match on
+# has-session/attach/list-windows; send-keys targets the bare `session:window`
 # (the `=` prefix is a session-only qualifier that tmux rejects as a pane
-# target).
+# target, and tmux resolves an exact session name ahead of a prefix match, so
+# the auto-named grouped clones -- <dir>-1, <dir>-2 -- never shadow the base).
+fire_run() { # $1 = tmux target
+  [[ -n "$run_cmd" ]] || return 0
+  tmux send-keys -t "$1" "$run_cmd" Enter
+}
+
 if ! tmux has-session -t "=$session" 2>/dev/null; then
+  if [[ -n "$window" ]]; then
+    tmux new-session -d -s "$session" -n "$window" -c "$start_dir"
+    fire_run "$session:$window"
+    exec tmux attach-session -t "=$session" \; select-window -t "$window"
+  fi
   tmux new-session -d -s "$session"
-  [[ -n "$run_cmd" ]] && tmux send-keys -t "$session" "$run_cmd" Enter
+  fire_run "$session"
   exec tmux attach-session -t "=$session"
+fi
+
+# The session exists. With --window, make sure the window does too, then select
+# it below. `new-window -d` is load-bearing: without it tmux moves the *base*
+# session's current window, which drags whichever terminal is attached to the
+# base onto this one's window.
+if [[ -n "$window" ]] &&
+  ! tmux list-windows -t "=$session" -F '#{window_name}' | grep -qxF "$window"; then
+  tmux new-window -d -t "$session:" -n "$window" -c "$start_dir"
+  fire_run "$session:$window"
 fi
 
 # The session already exists, so something is (or was) attached to it. A plain
@@ -102,4 +156,11 @@ fi
 # two terminals can sit on different windows without dragging each other along.
 # tmux auto-names the clone (<dir>-1, <dir>-2, ...). destroy-unattached reaps it
 # when this terminal closes; the base session -- and the shells in it -- survive.
+#
+# That independent pointer is what makes --window work: the clone selects its own
+# window and leaves every other client where it was.
+if [[ -n "$window" ]]; then
+  exec tmux new-session -t "=$session" \; set-option destroy-unattached on \; select-window -t "$window"
+fi
+
 exec tmux new-session -t "=$session" \; set-option destroy-unattached on

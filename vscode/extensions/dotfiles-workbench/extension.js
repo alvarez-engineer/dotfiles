@@ -3,15 +3,20 @@
 //   ┌──────────┬─────────────────────┬───────────────┐
 //   │          │  file / git diff    │               │
 //   │ Explorer │─────────────────────│    claude     │
-//   │ (sidebar)│  terminal (dir)     │  (dir-cc)     │
+//   │ (sidebar)│  shell              │               │
 //   └──────────┴─────────────────────┴───────────────┘
+//        one tmux session (<dir>), two windows: shell + claude
 //
 // The two terminals are *editor-area* terminals, because VS Code's bottom panel
 // is a single dock and cannot be both under-the-editor and a right column at
 // once. Both launch vscode/bin/dev-shell, which hops out of the flatpak sandbox
-// and attaches a tmux session; the right one asks for an independent session
-// (`--suffix cc`) so it does not mirror the left. It is a ready shell by default
-// -- set dotfilesWorkbench.claudeAutostart to run `claude` in it automatically.
+// and attaches the project's tmux session -- each as a named *window* of that
+// one session (`--window shell` / `--window claude`), not as separate sessions.
+// So `tmux attach -t <dir>` from Ghostty reaches both, while dev-shell's grouped
+// attach keeps each terminal's current-window pointer its own.
+//
+// The claude window can start in a subdirectory (dotfilesWorkbench.claudeDir) and
+// run a command on creation (dotfilesWorkbench.claudeAutostart + claudeCommand).
 //
 // Plain CommonJS, no build step — mirrors the repo's rule for the muted-ink
 // theme. `node --check` in `make check` is the only gate it needs.
@@ -89,14 +94,25 @@ async function buildLayout({ replace = false } = {}) {
     ],
   });
 
+  // Both terminals are named *windows of the one project session*, not separate
+  // sessions. They therefore share a window list: `tmux attach -t <dir>` from
+  // Ghostty reaches both, and either terminal can switch to the other's window.
+  // Each gets its own current-window pointer from the grouped-session attach in
+  // dev-shell, so selecting a window here never drags the other terminal along.
   vscode.window.createTerminal({
     name: "shell",
     shellPath: shell,
+    shellArgs: ["--window", "shell"],
     location: { viewColumn: vscode.ViewColumn.Two },
   });
 
-  const claudeArgs = ["--suffix", "cc"];
-  if (config().get("claudeAutostart")) claudeArgs.push("--run", "claude");
+  // The claude column can live in a subdirectory of the workspace -- open the
+  // parent of several repos and still land this terminal in the one you work in.
+  const claudeArgs = ["--window", "claude"];
+  const claudeDir = (config().get("claudeDir") || "").trim();
+  if (claudeDir) claudeArgs.push("--dir", claudeDir);
+  const claudeCommand = (config().get("claudeCommand") || "claude").trim();
+  if (config().get("claudeAutostart")) claudeArgs.push("--run", claudeCommand);
   vscode.window.createTerminal({
     name: "claude",
     shellPath: shell,

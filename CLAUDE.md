@@ -113,9 +113,16 @@ variable fails silently. That same sandbox needs no special case in `vscode/bin/
 its PATH scan finds `/app/bin/code` and defers to it. `dev-shell` also forwards
 `CLAUDE_CODE_SSE_PORT` across `host-spawn` so a host-side `claude` still auto-connects to
 the VS Code IDE server (diffs as editor tabs); that var is otherwise dropped at the
-boundary. It takes `--suffix NAME` (a second, independent session — the workbench's
-claude column uses `<dir>-cc`) and `--run CMD` (run once, only on session create, so a
-reattach never relaunches it).
+boundary.
+
+It offers **two** ways to give a terminal its own place to stand, and they are not
+interchangeable. `--window NAME` (with optional `--dir PATH`) attaches a named window
+*inside* the project's session — shared window list, own current-window pointer — so
+`tmux attach -t <dir>` from Ghostty reaches every terminal. `--suffix NAME` makes a
+wholly separate `<dir>-NAME` session with its own window list. The workbench uses
+`--window` for both columns; prefer it unless the work genuinely should not share a
+window list. `--run CMD` fires only when the call *creates* what it targets (the
+session, or with `--window` the window), so a reattach never relaunches it.
 
 **The workbench layout is a coded extension, and both terminals must be editor-area
 terminals.** VS Code's bottom panel is a *single* dock, so it cannot be both
