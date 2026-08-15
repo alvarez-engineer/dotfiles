@@ -113,9 +113,16 @@ variable fails silently. That same sandbox needs no special case in `vscode/bin/
 its PATH scan finds `/app/bin/code` and defers to it. `dev-shell` also forwards
 `CLAUDE_CODE_SSE_PORT` across `host-spawn` so a host-side `claude` still auto-connects to
 the VS Code IDE server (diffs as editor tabs); that var is otherwise dropped at the
-boundary. It takes `--suffix NAME` (a second, independent session — the workbench's
-claude column uses `<dir>-cc`) and `--run CMD` (run once, only on session create, so a
-reattach never relaunches it).
+boundary.
+
+It offers **two** ways to give a terminal its own place to stand, and they are not
+interchangeable. `--window NAME` (with optional `--dir PATH`) attaches a named window
+*inside* the project's session — shared window list, own current-window pointer — so
+`tmux attach -t <dir>` from Ghostty reaches every terminal. `--suffix NAME` makes a
+wholly separate `<dir>-NAME` session with its own window list. The workbench uses
+`--window` for both columns; prefer it unless the work genuinely should not share a
+window list. `--run CMD` fires only when the call *creates* what it targets (the
+session, or with `--window` the window), so a reattach never relaunches it.
 
 **The workbench layout is a coded extension, and both terminals must be editor-area
 terminals.** VS Code's bottom panel is a *single* dock, so it cannot be both
@@ -123,7 +130,13 @@ under-the-editor and a right column at once — `vscode/extensions/dotfiles-work
 therefore builds an editor grid (`vscode.setEditorLayout`) with two editor-area
 terminals rather than using the panel. It is idempotent: auto-build is skipped when a
 restored window (`enablePersistentSessions`) already put terminals in the editor area, so
-it never stacks a second set. Both extensions install the same way — `install.sh` packages
+it never stacks a second set. **That check must match on the terminal `name`** — do not
+"simplify" it back to testing `creationOptions.location`. A window reload restarts the
+extension host with an empty terminal list, so restored terminals come through
+`$acceptTerminalOpened`, which rebuilds `creationOptions` with **no `location` key**;
+testing it made the guard blind to exactly the terminals it exists to find, and every
+window open stacked a duplicate `shell` and `claude`. Both extensions install the same
+way — `install.sh` packages
 each into a throwaway `.vsix`, registers it, then symlinks the repo dir over VS Code's
 copy (see the theme note above); the shared `install_local_extension` handles theme and
 code alike.

@@ -40,7 +40,17 @@
         "dotfilesWorkbench.claudeAutostart": {
           "type": "boolean",
           "default": false,
-          "description": "Run `claude` in the right-hand terminal when the layout is built. Off by default: the column opens a ready shell where you type `claude` yourself."
+          "description": "Run the claude command in the right-hand terminal when its tmux window is first created. Off by default: the column opens a ready shell where you type `claude` yourself."
+        },
+        "dotfilesWorkbench.claudeCommand": {
+          "type": "string",
+          "default": "claude",
+          "description": "Command run in the right-hand terminal when claudeAutostart is on. Add flags to pin a model, e.g. `claude --model claude-opus-4-8`."
+        },
+        "dotfilesWorkbench.claudeDir": {
+          "type": "string",
+          "default": "",
+          "description": "Directory the right-hand terminal starts in, relative to the workspace root (absolute paths also work). Empty uses the workspace root. Useful when you open a parent folder of several repos but always want claude in one of them."
         },
         "dotfilesWorkbench.shellPath": {
           "type": "string",

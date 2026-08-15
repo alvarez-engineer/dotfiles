@@ -80,6 +80,21 @@
   // formatOnSave rewrites files in repos that never asked for it.
   "editor.formatOnSave": false,
 
+  // --- Markdown --------------------------------------------------------------
+  // Open .md in the rendered preview instead of the source. Not the same
+  // "preview" as workbench.editor.enablePreview above (that one is about italic
+  // throwaway tabs); this binds the *editor type* for the glob, so every .md --
+  // from the Explorer, quick-open, a search result, a link -- renders.
+  //
+  // vscode.markdown.preview.editor is read-only, so this is a trade: reading is
+  // one click, editing is two. To edit, reopen the file as text with
+  // "View: Reopen Editor With..." (ctrl+shift+p) and pick Text Editor, or
+  // right-click in the Explorer -> Open With -> Text Editor. The preview's own
+  // pencil icon does the same thing. Delete this key to go back to source-first.
+  "workbench.editorAssociations": {
+    "*.md": "vscode.markdown.preview.editor"
+  },
+
   // --- Terminal --------------------------------------------------------------
   // These mirror ghostty/config.ghostty, so the integrated terminal behaves like
   // the one outside the window: `cursor-style = block`, `cursor-style-blink =
@@ -132,13 +147,22 @@
   "terminal.integrated.allowChords": true,
 
   // --- Workbench layout (dotfiles-workbench extension) -------------------------
-  // The right-hand terminal is a ready shell; type `claude` yourself. Set here
-  // explicitly rather than relying on the extension's manifest default, because
-  // VS Code caches an extension's contributed defaults at registration and a
-  // window reload does not refresh them -- a default flipped in package.json
-  // would not take effect until the extension is reinstalled. An explicit user
-  // setting is read live and always wins. Flip to true to auto-launch claude.
-  "dotfilesWorkbench.claudeAutostart": false,
+  // Set here explicitly rather than relying on the extension's manifest defaults,
+  // because VS Code caches an extension's contributed defaults at registration
+  // and a window reload does not refresh them -- a default flipped in
+  // package.json would not take effect until the extension is reinstalled. An
+  // explicit user setting is read live and always wins.
+  //
+  // The right-hand terminal launches claude on the tmux window's first creation
+  // (not on every reattach). claudeDir is relative to the workspace root, which
+  // is what makes opening ~/projects and still landing claude in one repo work;
+  // if the directory is missing, dev-shell falls back to the workspace root
+  // rather than failing the terminal. These two are the machine-specific pair --
+  // move them to a workspace .vscode/settings.json if a second project needs
+  // different values.
+  "dotfilesWorkbench.claudeAutostart": true,
+  "dotfilesWorkbench.claudeDir": "qhapaq-nan",
+  "dotfilesWorkbench.claudeCommand": "claude --model claude-opus-4-8",
 
   "workbench.secondarySideBar.defaultVisibility": "hidden",
   "chat.agent.enabled": false
