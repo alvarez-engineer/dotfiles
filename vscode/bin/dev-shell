@@ -125,15 +125,43 @@ fire_run() { # $1 = tmux target
   tmux send-keys -t "$1" "$run_cmd" Enter
 }
 
+# Creating the session is a race, because the workbench launches its two
+# terminals milliseconds apart. On a cold boot there is no tmux server yet, so
+# *both* calls see has-session fail and both try to create -- and tmux fails the
+# loser with "duplicate session", which under `set -euo pipefail` killed that
+# terminal outright, before it could create its window or fire --run. That is
+# exactly what a full VS Code restart looked like: the shell column won the race
+# at boot, the claude column died on the duplicate, and the window came up with a
+# shell and no claude. (A mere window reload never showed it -- the session
+# already exists by then, so neither call takes this branch.)
+#
+# So a create that loses is not an error: fall through to the session-exists path
+# below, which adds this call's window and attaches. try_new_session returns 0
+# when *this* call created the session -- the only case that may fire --run for
+# it -- 1 when someone else got there first, and still dies loudly on a genuine
+# tmux failure rather than swallowing it.
+try_new_session() { # extra new-session args; session name is supplied here
+  local err
+  if err="$(tmux new-session -d -s "$session" "$@" 2>&1)"; then
+    return 0
+  fi
+  if tmux has-session -t "=$session" 2>/dev/null; then
+    return 1
+  fi
+  printf 'dev-shell: tmux new-session failed: %s\n' "$err" >&2
+  exit 1
+}
+
 if ! tmux has-session -t "=$session" 2>/dev/null; then
   if [[ -n "$window" ]]; then
-    tmux new-session -d -s "$session" -n "$window" -c "$start_dir"
-    fire_run "$session:$window"
-    exec tmux attach-session -t "=$session" \; select-window -t "$window"
+    if try_new_session -n "$window" -c "$start_dir"; then
+      fire_run "$session:$window"
+      exec tmux attach-session -t "=$session" \; select-window -t "$window"
+    fi
+  elif try_new_session; then
+    fire_run "$session"
+    exec tmux attach-session -t "=$session"
   fi
-  tmux new-session -d -s "$session"
-  fire_run "$session"
-  exec tmux attach-session -t "=$session"
 fi
 
 # The session exists. With --window, make sure the window does too, then select
