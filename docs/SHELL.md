@@ -21,7 +21,8 @@ finally your machine-local override file.
   `FZF_DEFAULT_OPTS` (muted-ink colors), `STARSHIP_CONFIG`, `NOTES_DIR`.
 - `shell/aliases.sh` — `ls`/`ll`/`la` (eza when present, otherwise `ls`), `cat`→bat,
   grep colors, `..`/`...` navigation, git shortcuts, `reload`, `serve`.
-- `shell/functions.sh` — `mkcd`, `up [N]`, `extract`, `fkill` (fzf), `gcd`.
+- `shell/functions.sh` — `mkcd`, `up [N]`, `extract`, `fkill` (fzf), `gcd`,
+  `code` ([closes the terminal it launched from](VSCODE.md#code-closes-its-terminal)).
 
 Aliases and functions are written in POSIX-compatible form so bash and zsh
 behave the same.

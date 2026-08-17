@@ -65,6 +65,41 @@ attaches to it rather than starting a second app.
 The shim is a transparent pass-through, so unlike other scripts here it has no
 `usage()` and no `--dry-run`: every argument, `-h` included, belongs to VS Code.
 
+## `code` closes its terminal
+
+`code .` is a hand-off — the work moves to the GUI, and the shell that launched
+it has nothing left to do. So a `code` **function** in `shell/functions.sh`
+wraps the shim: it launches VS Code detached and then exits the shell. A script
+cannot do this, because closing a terminal means ending the shell that owns it,
+and a child process cannot end its parent.
+
+Exiting the shell is also precisely the "close only this tab" behavior: a
+Ghostty tab is one shell, and under tmux it closes just that pane or window,
+never the terminal around it. In VS Code's own integrated terminal it closes
+that terminal tab.
+
+It deliberately does **not** close for anything that is not a plain hand-off:
+
+| Case | Why it stays open |
+|---|---|
+| `code -w` (`EDITOR`, `git commit`, `crontab -e`) | must block and return to this shell |
+| `--help`, `--version`, `--status`, `--list-extensions`, `--install-extension` | print to this terminal |
+| piped, redirected, or run from a script | not an interactive hand-off (`$PS1` unset, or stdout is not a tty) |
+| `DOTFILES_CODE_DEBUG=1 code …` | the shim prints its resolved command instead of running it |
+
+The flag test is an **allow-list** (`-n`, `-r`, `-g`, `-a`, `--new-window`,
+`--reuse-window`, `--goto`, `--add`, `--folder-uri`, `--file-uri`, `--profile`),
+so a VS Code flag nobody here has heard of leaves the terminal open rather than
+closing it over printed output. That is the safe direction to fail; add flags as
+they come up.
+
+Set `DOTFILES_CODE_NO_CLOSE=1` (in `~/.bashrc.local` / `~/.zshrc.local`, or for
+one call) to keep the terminal in every case.
+
+The launch is `setsid nohup env code …` — `env` runs the real binary instead of
+recursing back into the function, and the detach matters because `flatpak run`
+stays in the foreground and would otherwise die with the terminal's `SIGHUP`.
+
 ## The integrated terminal runs inside the sandbox
 
 This is the one that bites. A flatpak VS Code runs its integrated terminal **inside

@@ -43,6 +43,51 @@ fkill() {
   [ -n "$pid" ] && echo "$pid" | xargs kill "${1:--TERM}"
 }
 
+# code [ARGS] — VS Code, closing the terminal it was launched from.
+#
+# `code .` is a hand-off: the work continues in the GUI, so the shell that
+# launched it has nothing left to do. Exiting the shell is also exactly the
+# "close only this tab" behavior wanted -- a Ghostty tab is one shell, and
+# inside tmux it closes just that pane/window, never the whole terminal.
+#
+# It stays open for anything that is NOT a plain hand-off, which is why the
+# flag list below is an allow-list rather than a list of exceptions:
+#   - EDITOR="code -w" (git commit, crontab -e) must block, then return here.
+#   - --help, --version, --list-extensions, --status print to this terminal.
+#   - a pipe or a script: no PS1, or stdout is not a tty.
+# A new VS Code flag is therefore inert here until it is added, which is the
+# safe direction to fail. DOTFILES_CODE_NO_CLOSE=1 turns the close off.
+#
+# `env` runs the real binary (vscode/bin/code) rather than recursing into this
+# function; nohup/setsid keep the GUI alive past the terminal's dying SIGHUP,
+# which matters because `flatpak run` stays in the foreground.
+code() {
+  local arg
+  # DOTFILES_CODE_DEBUG makes the shim print its resolved command instead of
+  # running it -- output, so the terminal has to survive to show it.
+  if [ -n "${DOTFILES_CODE_NO_CLOSE:-}" ] || [ -n "${DOTFILES_CODE_DEBUG:-}" ] ||
+    [ -z "${PS1:-}" ] || [ ! -t 1 ]; then
+    env code "$@"
+    return
+  fi
+  for arg in "$@"; do
+    case "$arg" in
+      -n|--new-window|-r|--reuse-window|-g|--goto|-a|--add) ;;
+      --folder-uri|--file-uri|--profile|--) ;;
+      -*) env code "$@"; return ;;
+    esac
+  done
+  if command -v setsid >/dev/null 2>&1; then
+    setsid nohup env code "$@" >/dev/null 2>&1 &
+  else
+    nohup env code "$@" >/dev/null 2>&1 &
+  fi
+  # Off the job table, or interactive zsh answers the exit below with
+  # "you have running jobs" and stays open until you exit a second time.
+  disown 2>/dev/null || :
+  exit 0
+}
+
 # gcd — cd to a git repo's top level.
 gcd() {
   local root
